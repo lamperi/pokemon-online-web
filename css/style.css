@@ -1,0 +1,49 @@
+/*
+ * CSS for HTML5 Pokemon Online Client
+ */
+html, body {
+	margin: 0;
+	padding: 0;
+}
+
+#wrap {
+	width: 1200px;
+	margin: 0 auto;
+	background: #99c;
+}
+
+#tabs {
+	width: 28%;
+}
+
+#channels { margin-top: 1em; }
+#channels li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }
+
+#main {
+	width: 69%;
+}
+
+#footer {
+	clear: both;
+}
+
+.left {
+	float: left;
+}
+
+.right {
+	float: right;
+}
+
+ul.potabs {
+	list-style: none;
+}
+
+ul.potabs li {
+	display: inline;
+}
+
+.frames {
+	border-style: solid;
+	border-color: blue;
+}
