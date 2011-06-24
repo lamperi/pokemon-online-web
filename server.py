@@ -153,6 +153,8 @@ class POhandler(WebSocketHandler):
             info = loadTeam()
             info.team.nick = json['name']
             self.proxy.login(info)
+        elif json['type'] == 'ChannelMessage':
+            self.proxy.sendChannelMessage(json['chanId'], json['message'])
             
     def sendObject(self, o):
         print dumps(o)

@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <title>Pokemon Online Web Client</title>
+        <meta charset="utf-8">
+        <!--
+        <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/themes/base/jquery-ui.css" type="text/css" media="all" />
+        <link rel="stylesheet" href="http://static.jquery.com/ui/css/demo-docs-theme/ui.theme.css" type="text/css" media="all" />
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js" ></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js" ></script>
+        -->
+        <link rel="stylesheet" type="text/css" href="css/cupertino/jquery-ui-1.8.13.custom.css">
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <script type="text/javascript" src="js/jquery-1.5.1.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui-1.8.13.custom.min.js"></script>
+        <script type="text/javascript" src="js/ui.js"></script>
+        <script type="text/javascript" src="js/network.js"></script>
+    </head>
+    <body>
+        <div id="wrap" class="ui-widget ui-corner-all">
+            <div id="header" class="ui-widget ui-corner-all ui-widget-content">
+                <h1>Pokemon Online</h1>
+                Server version: <span id="server_version"></span> |
+                Server name: <span id="server_name"></span> |
+                Status: <span id="conn_status">Not Connected</span> |
+                Last message: <span id="output"></span>
+            </div>
+            <div id="tabs" class="left ui-widget">
+                <ul class="potabs">
+                    <li><a href="#tabs-1">Players</a></li>
+                    <li><a href="#tabs-2">Battles</a></li>
+                    <li><a href="#tabs-3">Channel</a></li>
+                </ul>
+                <div id="tabs-1">
+                    <p><ul id="playerlist"></ul></p>
+                </div>
+                <div id="tabs-2">
+                    <p><ul id="battlelist"></ul></p>
+                </div>
+                <div id="tabs-3">
+                    <p><ul id="channellist"></ul></p>
+                </div>
+            </div>
+            <div id="main" class="right ui-widget ui-corner-all">
+                <div id="announcement" class="ui-widget ui-corner-all ui-widget-content"></div>
+                <div id="channels">
+                    <ul class="potabs">
+                    </ul>
+                </div>
+                <form method="POST" target="">
+                     <input type="text" id="chatmessage" name="chatmessage">
+                </form>
+            </div>
+            <div id="footer" class="ui-widget">
+                <p class="ui-widget-content ui-corner-bottom">&copy; Lamperi</p>
+            </div>
+        </div>
+    </body>
+</html>
+

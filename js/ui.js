@@ -40,18 +40,33 @@ Data = {
 
 UI = function() {
 
+    var $tabs;
+    var $channels;
+
+    function channelIndex() {
+        return $tabs.tabs('option', 'selected');
+    }
+
     function init() {
-        $('#tabs').tabs();
+        $tabs = $('#tabs').tabs();
         $channels = $('#channels').tabs({
             tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Close Channel</span></li>",
             add: function(event, ui) {
-                $(ui.panel).append("<p><div id=\"chat\"></div></p>");
+                $(ui.panel).append("<p><div class=\"chat ui-widget-content\"></div></p>");
             }
         });
         $channels.tab_counter = 0;
         $("#tabs span.ui-icon-close").live("click", function() {
             var index = $("li", $tabs).index($( this ).parent());
             $tabs.tabs("remove", index);
+        });
+
+        $("#chatmessage").keydown(function(ev) {
+             if (ev.which == 13) { // enter
+                 ev.preventDefault();
+                 Network.sendChannelMessage(Data.channels[channelIndex()].id, $(this).val());
+                 $(this).val("");
+             }
         });
     }
 
@@ -74,11 +89,24 @@ UI = function() {
     }
 
     var print = function(channelId, message) {
-
+        var chat = $("#channels #" + Data.channels[channelId].chatWidget + " div.chat");
+        chat.append(message + "<br>");
+    }
+    var printAll = function(message) {
+        var chat = $("#channels div.chat");
+        chat.append(message + "<br>");
     }
 
     /* Handler, takes care of anything Network gives */
     function Handler() {}
+
+    Handler.prototype.VersionControl = function(data) {
+       $('#server_version').html(data.version);
+    }
+
+    Handler.prototype.ServerName = function(data) {
+       $('#server_name').html(data.name);
+    }
 
     Handler.prototype.Announcement = function(data) {
        $('#announcement').html(data.announcement);
@@ -104,13 +132,22 @@ UI = function() {
 
     Handler.prototype.JoinChannel = function(data) {
         if (Data.player.id = data.playerId) {
-            $channels.tabs("add", "#channels-" + $channels.tab_counter, Data.channels[data.chanId].name);
+            var widget = $channels.tabs("add", "#channels-" + $channels.tab_counter, Data.channels[data.chanId].name);
+            Data.channels[data.chanId].chatWidget = "channels-" + $channels.tab_counter;
             $channels.tab_counter++;
         }
     }
 
     Handler.prototype.ChannelMessage = function(data) {
-        print(data.chanId, data.message);
+        print(data.chanId, data.user + ": " + data.message);
+    }
+
+    Handler.prototype.HtmlMessage = function(data) {
+        printAll(data.message);
+    }
+
+    Handler.prototype.SendMessage = function(data) {
+        printAll(data.message);
     }
 
     return {

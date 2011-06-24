@@ -1,8 +1,9 @@
 Network = {
     init: function(handler) {
-        this.handler = handler;
+        var ws;
 
-        /* var */ ws = new WebSocket("ws://localhost:8080/test");
+        this.handler = handler;
+        ws = this.ws = new WebSocket("ws://localhost:8080/test");
         ws.onmessage = function(evt) {
             try {
                 var data = JSON.parse(evt.data)
@@ -19,7 +20,7 @@ Network = {
     
         ws.onopen = function(evt) {
             $('#conn_status').html('<b>Connected</b>');
-            ws.send(JSON.stringify({type: 'Login', name: 'Lamp'+String(Math.random()).substring(0,4)}));
+            Network.sendJSON({type: 'Login', name: 'Lamp'+String(Math.random()).substring(0,4)});
         }
         ws.onerror = function(evt) {
             $('#conn_status').html('<b>Error</b>');
@@ -28,6 +29,14 @@ Network = {
             $('#conn_status').html('<b>Closed</b>');
         }
     },
+
+    sendJSON: function(o) {
+        this.ws.send(JSON.stringify(o));
+    },
+
+    sendChannelMessage: function(id, message) {
+        this.sendJSON({type: 'ChannelMessage', 'chanId': id, 'message': message});
+    }
 }
 
 $(document).ready(function() {
