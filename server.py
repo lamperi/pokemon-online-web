@@ -74,7 +74,7 @@ class Receiver(POProtocol):
 
     def onChallengeStuff(self, challengeInfo):
         info = { 'dsc': challengeInfo.dsc, 'opp': challengeInfo.opp,
-                          'clauses': challangeInfo.clauses, 'mode': challengeInfo.mode} 
+                          'clauses': challengeInfo.clauses, 'mode': challengeInfo.mode} 
         self.client.sendObject({'type': 'SendTeam', 'challengeInfo': info})
 
     def onEngageBattle(self, battleid, player1, player2, battleConf, teamBattle):
@@ -119,8 +119,8 @@ class Receiver(POProtocol):
     def onAway(self, playerid, isAway):
         self.client.sendObject({'type': 'Away', 'playerId': playerid, 'isAway': isAway})
 
-    def onSendMessage(self, message):
-        self.client.sendObject({'type': 'SendMessage', 'message': message})
+    def onSendMessage(self, user, message):
+        self.client.sendObject({'type': 'SendMessage', 'user': user, 'message': message})
 
     def onHtmlMessage(self, message):
         self.client.sendObject({'type': 'HtmlMessage', 'message': message})
@@ -129,7 +129,6 @@ class Receiver(POProtocol):
 
     def connectionLost(self, reason):
         if self.client:
-            self.client.transport.loseConnection()
             self.client = None
 
 class POhandler(WebSocketHandler):
@@ -148,13 +147,16 @@ class POhandler(WebSocketHandler):
 
         json = loads(frame)
 
-        if json['type'] == 'Login':
-            print "Tries to login!"
-            info = loadTeam()
-            info.team.nick = json['name']
-            self.proxy.login(info)
-        elif json['type'] == 'ChannelMessage':
-            self.proxy.sendChannelMessage(json['chanId'], json['message'])
+        try:
+            method = "on{0}".format(json["type"])
+            print method
+            if hasattr(self, method):
+                getattr(self, method)(json)
+            else:
+                print "Unknown event"
+        except Exception as e:
+            print "Error handling in JSON event: {0}".format(json.get("type"), "UnknownEvent")
+            print "{0}: {1}".format(e.__class__.__name__, e) 
             
     def sendObject(self, o):
         print dumps(o)
@@ -184,6 +186,16 @@ class POhandler(WebSocketHandler):
 
     def cantConnect(self, msg):
         print 'Can\'t connect: {0}'.format(msg)
+
+    # Handing JSON Events from Websocket client
+    def onLogin(self, json):
+        print "Tries to login!"
+        info = loadTeam()
+        info.team.nick = json['name']
+        self.proxy.login(info)
+
+    def onChannelMessage(self, json):
+        self.proxy.sendChannelMessage(json['chanId'], json['message'])
 
 
 class FlashSocketPolicy(Protocol):

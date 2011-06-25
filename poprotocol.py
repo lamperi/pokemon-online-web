@@ -482,11 +482,18 @@ class POProtocol(Int16StringReceiver):
 
     def on_SendMessage(self, cmd):
         message, i = self.decode_string(cmd, 0)
-        self.onSendMessage(message)
+        splitted = message.split(":", 1)
+        if len(splitted) == 2:
+            user = splitted[0]
+            msg = splitted[1].lstrip()
+            self.onSendMessage(user, msg)
+        else:
+            self.onSendMessage("", message)
 
-    def onSendMessage(self, message):
+    def onSendMessage(self, user, message):
         """
         Event telling us of a server wide message
+        user : unicode - the name of the user
         message - unicode : the real message
         """
 

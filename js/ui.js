@@ -35,7 +35,14 @@ Logic = function() {
 Data = {
     players: {},
     channels: {},
-    battles: {}
+    battles: {},
+
+    getPlayerByName: function(name) {
+        for (p in this.players) {
+            if (this.players[p].name == name)
+                return this.players[p];
+        }
+    },
 }
 
 UI = function() {
@@ -97,6 +104,44 @@ UI = function() {
         chat.append(message + "<br>");
     }
 
+    var getColour = function(user, name) {
+        if (user) {
+            var color = user.color;
+            if (color.spec == 1) { // Rgb
+                colours = "#" + user.color.red.toString(16) + user.color.green.toString(16) + user.color.blue.toString(16);
+            } else if (color.spec == 0) { // Invalid
+                colour = Theme.getColour(user.id);
+            } else { // Too lazy
+                colour = Theme.getColour(user.id);
+            }
+        } else {
+            switch (name) {
+                case "~~Server~~": colour = "orange"; break;
+                case "Welcome Message": colour = "blue"; break;
+                default: colour = "#3daa68";
+            }
+        }
+        return colour;
+    }
+
+    var htmlEscape = function(html) {
+        return html.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&rt;");
+    }
+
+    var printLine = function(chanId, user, message) {
+        if (message.substring(0,3) == "***") {
+            print(chanId, "<span style='color:magenta'>" + htmlEscape(message) + "</span>")
+            return;
+        }
+        if (user) {
+            var player = Data.getPlayerByName(user);
+            var colour = getColour(player, user);
+            print(chanId, "<span style=\"color: " + colour + ";\"><b>" + user + ":</b></span> " + htmlEscape(message));
+        } else {
+            print(chanId, htmlEscape(message));
+        }
+    }
+
     /* Handler, takes care of anything Network gives */
     function Handler() {}
 
@@ -139,7 +184,7 @@ UI = function() {
     }
 
     Handler.prototype.ChannelMessage = function(data) {
-        print(data.chanId, data.user + ": " + data.message);
+        printLine(data.chanId, data.user, data.message);
     }
 
     Handler.prototype.HtmlMessage = function(data) {
@@ -147,7 +192,9 @@ UI = function() {
     }
 
     Handler.prototype.SendMessage = function(data) {
-        printAll(data.message);
+        $(Data.channels).each(function(id) {
+            printLine(id, data.user, data.message);
+        });
     }
 
     return {

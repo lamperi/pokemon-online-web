@@ -34,8 +34,16 @@ Network = {
         this.ws.send(JSON.stringify(o));
     },
 
-    sendChannelMessage: function(id, message) {
-        this.sendJSON({type: 'ChannelMessage', 'chanId': id, 'message': message});
+    sendChannelMessage: function(chanId, message) {
+        this.sendJSON({type: 'ChannelMessage', chanId: chanId, message: message});
+    },
+
+    sendJoinChannel: function(chanName) {
+        this.sendJSON({type: 'JoinChannel', chanName: chanName})
+    },
+
+    sendLeaveChannel: function(chanId) {
+        this.sendJSON({type: 'LeaveChannel', chanId: chanId})
     }
 }
 
