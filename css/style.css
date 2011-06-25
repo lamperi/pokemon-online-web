@@ -42,6 +42,10 @@ ul.potabs li {
 	display: inline;
 }
 
+#playerlist, #channellist, #battlelist {
+	list-style: none;
+}
+
 .frames {
 	border-style: solid;
 	border-color: blue;

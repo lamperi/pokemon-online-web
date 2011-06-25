@@ -13,9 +13,40 @@ Logic = function() {
         this.pokemon = playerInfo.pokemon;
     }
 
+    Player.prototype.State = {
+        NotLoggedIn: 0,
+        LoggedIn: 1,
+        Battling: 2,
+        Away: 4
+    }
+
+    Player.prototype.isBattling = function() {
+        return this.flags & this.State.Battling;
+    }
+
+    Player.prototype.isAway = function() {
+        return this.flags & this.State.Away;
+    }
+
+    Player.prototype.authString = function() {
+        switch (this.auth) {
+            case 3: return "owner";
+            case 2: return "admin";
+            case 1: return "moderator";
+            default: return "user";
+        }
+    }
+
+    Player.prototype.statusString = function() {
+        if (this.isBattling()) return "battle"
+        if (this.isAway()) return "away";
+        return "avail";
+    }
+
     function Channel(id, name) {
         this.id = id;
         this.name = name;
+        this.players = [];
     }
 
     function translate() {
@@ -50,8 +81,16 @@ UI = function() {
     var $tabs;
     var $channels;
 
-    function channelIndex() {
-        return $tabs.tabs('option', 'selected');
+    function openChannel() {
+        var index = $channels.tabs('option', 'selected');
+        var tab =  $("ul li", $channels)[index]
+        if (!tab) return;
+        var name = tab.firstChild.firstChild.nodeValue;
+        for (var i in Data.channels) {
+            if (Data.channels[i].name == name) {
+                return Data.channels[i];
+            }
+        }
     }
 
     function init() {
@@ -65,25 +104,29 @@ UI = function() {
         $channels.tab_counter = 0;
         $("#tabs span.ui-icon-close").live("click", function() {
             var index = $("li", $tabs).index($( this ).parent());
-            $tabs.tabs("remove", index);
+            $channels.tabs("remove", index);
         });
 
         $("#chatmessage").keydown(function(ev) {
              if (ev.which == 13) { // enter
                  ev.preventDefault();
-                 Network.sendChannelMessage(Data.channels[channelIndex()].id, $(this).val());
+                 Network.sendChannelMessage(openChannel().id, $(this).val());
                  $(this).val("");
              }
         });
     }
 
     var addPlayerToList = function(p) {
-        var item = "<li>" + p.name + "</li>";
-        var target = $('#playerlist').children().filter(function() {
+        var item = "<li><span class='playerName' style=\"color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
+        var target = $('#playerlist li span[class=playerName]').filter(function() {
             return $(this).text() > p.name;
         }).eq(0);
         if (target.length > 0) target.before(item);
         else $('#playerlist').append(item);
+    }
+    var removePlayerFromList = function(p) {
+        var li = $('#playerlist span[class=playerName]').filter(function(i) { return $(this).text() == p.name; }).parent();
+        li.remove();
     }
 
     var addChannelToList = function(c) {
@@ -125,20 +168,22 @@ UI = function() {
     }
 
     var htmlEscape = function(html) {
-        return html.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&rt;");
+        return html.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    var printLine = function(chanId, user, message) {
+    var fancyLine = function(user, message) {
         if (message.substring(0,3) == "***") {
-            print(chanId, "<span style='color:magenta'>" + htmlEscape(message) + "</span>")
-            return;
+            return "<span style='color:magenta'>" + htmlEscape(message) + "</span>";
         }
         if (user) {
             var player = Data.getPlayerByName(user);
+            if (player && 0 < player.auth && player.auth <= 3) {
+                user = "<i>+" + user + "</i>";
+            }
             var colour = getColour(player, user);
-            print(chanId, "<span style=\"color: " + colour + ";\"><b>" + user + ":</b></span> " + htmlEscape(message));
+            return "<span style=\"color: " + colour + ";\"><b>" + user + ":</b></span> " + htmlEscape(message);
         } else {
-            print(chanId, htmlEscape(message));
+            return htmlEscape(message);
         }
     }
 
@@ -146,11 +191,11 @@ UI = function() {
     function Handler() {}
 
     Handler.prototype.VersionControl = function(data) {
-       $('#server_version').html(data.version);
+       $('#server_version').text(data.version);
     }
 
     Handler.prototype.ServerName = function(data) {
-       $('#server_name').html(data.name);
+       $('#server_name').text(data.name);
     }
 
     Handler.prototype.Announcement = function(data) {
@@ -161,7 +206,6 @@ UI = function() {
         var player = new Logic.Player(data.player);
         Data.player = player;
         Data.players[player.id] = player;
-        addPlayerToList(player);
     }
 
     Handler.prototype.TierSelection = function(data) {
@@ -175,16 +219,59 @@ UI = function() {
         });
     }
 
-    Handler.prototype.JoinChannel = function(data) {
-        if (Data.player.id = data.playerId) {
-            var widget = $channels.tabs("add", "#channels-" + $channels.tab_counter, Data.channels[data.chanId].name);
-            Data.channels[data.chanId].chatWidget = "channels-" + $channels.tab_counter;
-            $channels.tab_counter++;
+    Handler.prototype.ChannelPlayers = function(data) {
+
+        $channels.tabs("add", "#channels-" + $channels.tab_counter, Data.channels[data.chanId].name);
+        Data.channels[data.chanId].chatWidget = "#channels-" + $channels.tab_counter;
+        $channels.tab_counter++;
+
+        var players = data.playerList;
+        Data.channels[data.chanId].players = players;
+        var channel = openChannel();
+        if (channel && channel.id === data.chanId) {
+            for (var i = 0; i < data.playerList.length; ++i) {
+                addPlayerToList(Data.players[data.playerList[i]]);
+            }
         }
     }
 
+    Handler.prototype.PlayersList = function(data) {
+        var player = new Logic.Player(data.player);
+        Data.players[player.id] = player;
+    }
+
+    Handler.prototype.JoinChannel = function(data) {
+        var player = Data.players[data.playerId];
+        var channel = Data.channels[data.chanId];
+        channel.players.push(player);
+        addPlayerToList(player);
+        print(data.chanId, player.name + " joined " + channel.name + ".");
+    }
+
+    Handler.prototype.LeaveChannel = function(data) {
+        var player = Data.players[data.playerId];
+        var channel = Data.channels[data.chanId];
+        print(data.chanId, player.name + " left " + channel.name + ".");
+        var i = channel.players.indexOf(player);
+        if (i != -1)
+            channel.players.splice(i,1);
+        removePlayerFromList(player);
+    }
+
+    Handler.prototype.Logout = function(data) {
+        var player = Data.players[data.playerId];
+        for (var i in Data.channels) {
+            var channel = Data.channels[i];
+            var i = channel.players.indexOf(player);
+            if (i != -1)
+                channel.players.splice(i,1);
+        }
+        removePlayerFromList(player);
+        print(data.chanId, player.name + " quit.");
+    }
+
     Handler.prototype.ChannelMessage = function(data) {
-        printLine(data.chanId, data.user, data.message);
+        print(data.chanId, fancyLine(data.user, data.message));
     }
 
     Handler.prototype.HtmlMessage = function(data) {
@@ -192,9 +279,11 @@ UI = function() {
     }
 
     Handler.prototype.SendMessage = function(data) {
-        $(Data.channels).each(function(id) {
-            printLine(id, data.user, data.message);
-        });
+        printAll(fancyLine(data.user, data.message));
+    }
+
+    Handler.prototype.Register = function(data) {
+        //$("#registerButton").enable();
     }
 
     return {
