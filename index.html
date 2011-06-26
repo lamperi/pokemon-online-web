@@ -48,11 +48,19 @@
                     </ul>
                 </div>
                 <form method="POST" target="">
-                     <input type="text" id="chatmessage" name="chatmessage">
+                    <input type="text" id="chatmessage" name="chatmessage">
+                    <button id="send">Send</button>
+                    <button id="registerbutton">Register</button>
                 </form>
             </div>
             <div id="footer" class="ui-widget">
                 <p class="ui-widget-content ui-corner-bottom">&copy; Lamperi</p>
+            </div>
+            <div id="dialog-password" title="Enter your password">
+                <p>Enter the password for this name. If you don't know it, then change your name.</p>
+                <input id="dialog-password-input" type="password">
+                <button id="dialog-password-ok">Ok</button>
+                <button id="dialog-password-cancel">Cancel</button>
             </div>
         </div>
     </body>

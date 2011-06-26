@@ -8,6 +8,7 @@ from websocket import WebSocketHandler, WebSocketSite
 
 from struct import pack, unpack
 from json import loads, dumps
+from hashlib import md5
 
 from poprotocol import POProtocol
 from teamloader import loadTeam
@@ -196,6 +197,19 @@ class POhandler(WebSocketHandler):
 
     def onChannelMessage(self, json):
         self.proxy.sendChannelMessage(json['chanId'], json['message'])
+
+    def onJoinChannel(self, json):
+        self.proxy.joinChannel(json['chanName'])
+
+    def onRegister(self, json):
+        self.proxy.register()
+
+    def onAskForPass(self, json):
+        pw = json["password"]
+        salt = json["salt"]
+        s = md5(md5(pw.decode("utf-8").encode("iso-8859-1", "ignore")).hexdigest() + salt.encode("iso-8859-1", "ignore")).hexdigest()
+        u = s.decode("iso-8859-1")
+        self.proxy.askForPass(u)
 
 
 class FlashSocketPolicy(Protocol):

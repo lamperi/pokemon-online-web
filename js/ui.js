@@ -67,6 +67,7 @@ Data = {
     players: {},
     channels: {},
     battles: {},
+    PMs: {},
 
     getPlayerByName: function(name) {
         for (p in this.players) {
@@ -81,6 +82,8 @@ UI = function() {
     var $tabs;
     var $channels;
 
+    var salt;
+
     function openChannel() {
         var index = $channels.tabs('option', 'selected');
         var tab =  $("ul li", $channels)[index]
@@ -91,6 +94,10 @@ UI = function() {
                 return Data.channels[i];
             }
         }
+    }
+    function openChannelId() {
+        var c = openChannel();
+        return c !== undefined ? c.id : undefined;
     }
 
     function init() {
@@ -110,9 +117,43 @@ UI = function() {
         $("#chatmessage").keydown(function(ev) {
              if (ev.which == 13) { // enter
                  ev.preventDefault();
-                 Network.sendChannelMessage(openChannel().id, $(this).val());
+                 Network.sendChannelMessage(openChannelId(), $(this).val());
                  $(this).val("");
              }
+        });
+
+        $("#send").button().click(function(e) {
+            e.preventDefault();
+            var $chatmessage = $("#chatmessage");
+            Network.sendChannelMessage(openChannelId(), $chatmessage.val());
+            $chatmessage.val("");
+
+        });
+        $("#registerbutton").button().click(function(e) {
+            e.preventDefault();
+            Network.sendRegister();
+            $(this).button("disable");
+        });
+        $("#registerbutton").button("disable");
+
+        $("#dialog:ui-dialog").dialog( "destroy" );
+                    
+        $("#dialog-password").dialog({
+             autoOpen: false,
+             height: 200,
+             width: 400,
+             modal: true,
+             close: function(event, ui) {
+             }
+        });
+        $("#dialog-password-ok").click(function() {
+            $("#dialog-password").dialog("close");
+            Network.sendAskForPass($("#dialog-password-input").val(), salt);
+            $("#dialog-password-input").val("");
+        });
+        $("#dialog-password-cancel").click(function() {
+            $("#dialog-password").dialog("close");
+            $("#dialog-password-input").val("");
         });
     }
 
@@ -130,7 +171,10 @@ UI = function() {
     }
 
     var addChannelToList = function(c) {
-        var item = "<li>" + c.name + "</li>";
+        var item = $("<li>" + c.name + "</li>");
+        item.click(function(e) {
+            Network.sendJoinChannel(c.name);
+        });
         var target = $('#channellist').children().filter(function() {
             return $(this).text() > c.name;
         }).eq(0);
@@ -149,14 +193,7 @@ UI = function() {
 
     var getColour = function(user, name) {
         if (user) {
-            var color = user.color;
-            if (color.spec == 1) { // Rgb
-                colours = "#" + user.color.red.toString(16) + user.color.green.toString(16) + user.color.blue.toString(16);
-            } else if (color.spec == 0) { // Invalid
-                colour = Theme.getColour(user.id);
-            } else { // Too lazy
-                colour = Theme.getColour(user.id);
-            }
+            colour = userColour(user);
         } else {
             switch (name) {
                 case "~~Server~~": colour = "orange"; break;
@@ -165,6 +202,21 @@ UI = function() {
             }
         }
         return colour;
+    }
+    var userColour = function(user) {
+        var color = user.color;
+        if (color.spec == 1) { // Rgb
+            colours = "#" + user.color.red.toString(16) + user.color.green.toString(16) + user.color.blue.toString(16);
+        } else if (color.spec == 0) { // Invalid
+            colour = Theme.getColour(user.id);
+        } else { // Too lazy
+            colour = Theme.getColour(user.id);
+        }
+        return colour;
+    }
+
+    var fancyName = function(colour, name) {
+            return "<span style=\"color: " + colour + ";\"><b>" + name + ":</b></span> ";
     }
 
     var htmlEscape = function(html) {
@@ -181,7 +233,7 @@ UI = function() {
                 user = "<i>+" + user + "</i>";
             }
             var colour = getColour(player, user);
-            return "<span style=\"color: " + colour + ";\"><b>" + user + ":</b></span> " + htmlEscape(message);
+            return fancyName(colour, user) + htmlEscape(message);
         } else {
             return htmlEscape(message);
         }
@@ -227,8 +279,7 @@ UI = function() {
 
         var players = data.playerList;
         Data.channels[data.chanId].players = players;
-        var channel = openChannel();
-        if (channel && channel.id === data.chanId) {
+        if (openChannelId() === data.chanId) {
             for (var i = 0; i < data.playerList.length; ++i) {
                 addPlayerToList(Data.players[data.playerList[i]]);
             }
@@ -244,7 +295,9 @@ UI = function() {
         var player = Data.players[data.playerId];
         var channel = Data.channels[data.chanId];
         channel.players.push(player);
-        addPlayerToList(player);
+        if (openChannelId() === data.chanId) {
+            addPlayerToList(player);
+        }
         print(data.chanId, player.name + " joined " + channel.name + ".");
     }
 
@@ -255,7 +308,9 @@ UI = function() {
         var i = channel.players.indexOf(player);
         if (i != -1)
             channel.players.splice(i,1);
-        removePlayerFromList(player);
+        if (openChannelId() === data.chanId) {
+            removePlayerFromList(player);
+        }
     }
 
     Handler.prototype.Logout = function(data) {
@@ -266,6 +321,7 @@ UI = function() {
             if (i != -1)
                 channel.players.splice(i,1);
         }
+        // remove in any case
         removePlayerFromList(player);
         print(data.chanId, player.name + " quit.");
     }
@@ -283,7 +339,45 @@ UI = function() {
     }
 
     Handler.prototype.Register = function(data) {
-        //$("#registerButton").enable();
+        $("#registerbutton").button("enable");
+    }
+
+    Handler.prototype.AskForPass = function(data) {
+        $("#dialog-password").dialog("open");
+        salt = data.salt;
+    }
+
+    Handler.prototype.SendPM = function(data) {
+        var playerId = data.playerId;
+        var message = data.message;
+        var player = Data.players[playerId];
+        var pm_dialog;
+        if (Data.PMs.hasOwnProperty(playerId)) {
+            pm_dialog = Data.PMs[playerId];
+        } else {
+            // initialize PM dialog
+            pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
+                height: 220,
+                resize: function(ui, event) {
+                    $(".chatdisplay", this).height($(this).height() - 53);
+                },
+                close: function(ui, event) {
+                    delete Data.PMs[playerId];
+                },
+            });
+            $("input", pm_dialog).keydown(function(event) {
+                if (event.which == 13) {
+                    $(this).text("");
+                }
+            });
+            pm_dialog.dialog("open");
+            Data.PMs[playerId] = pm_dialog;
+        }
+        var $chatdisplay = $(".chatdisplay", pm_dialog);
+        $chatdisplay.append(fancyName(userColour(player), player.name) + ": " + htmlEscape(message) + "<br>");
+        $chatdisplay.height(pm_dialog.height() - 53);
+        var plainElement = $chatdisplay[0];
+        plainElement.scrollTop = plainElement.scrollHeight;
     }
 
     return {

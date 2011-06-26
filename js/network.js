@@ -44,6 +44,14 @@ Network = {
 
     sendLeaveChannel: function(chanId) {
         this.sendJSON({type: 'LeaveChannel', chanId: chanId})
+    },
+    
+    sendRegister: function() {
+        this.sendJSON({type: 'Register'});
+    },
+
+    sendAskForPass: function(password, salt) {
+        this.sendJSON({type: 'AskForPass', password: password, salt: salt});
     }
 }
 

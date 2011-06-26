@@ -56,6 +56,10 @@ class POProtocol(Int16StringReceiver):
         tosend=struct.pack('B', NetworkEvents['SendMessage']) + self.encode_string(message)
         self.send(tosend)
 
+    def register(self):
+        tosend=struct.pack('B', NetworkEvents['Register'])
+        self.send(tosend)
+
     def askForPass(self, u):
         tosend = struct.pack('B', NetworkEvents['AskForPass']) + self.encode_string(u)
         self.send(tosend) 
