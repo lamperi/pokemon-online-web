@@ -201,6 +201,9 @@ class POhandler(WebSocketHandler):
     def onJoinChannel(self, json):
         self.proxy.joinChannel(json['chanName'])
 
+    def onLeaveChannel(self, json):
+        self.proxy.partChannel(json['chanId'])
+
     def onRegister(self, json):
         self.proxy.register()
 
@@ -210,6 +213,9 @@ class POhandler(WebSocketHandler):
         s = md5(md5(pw.decode("utf-8").encode("iso-8859-1", "ignore")).hexdigest() + salt.encode("iso-8859-1", "ignore")).hexdigest()
         u = s.decode("iso-8859-1")
         self.proxy.askForPass(u)
+
+    def onSendPM(self, json):
+        self.proxy.sendPM(json['playerId'], json['message'])
 
 
 class FlashSocketPolicy(Protocol):

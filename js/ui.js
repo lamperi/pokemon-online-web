@@ -75,6 +75,13 @@ Data = {
                 return this.players[p];
         }
     },
+    getChannelByName: function(name) {
+
+        for (var i in this.channels) {
+            if (this.channels[i].name == name)
+                return Data.channels[i];
+        }
+    }
 }
 
 UI = function() {
@@ -89,11 +96,7 @@ UI = function() {
         var tab =  $("ul li", $channels)[index]
         if (!tab) return;
         var name = tab.firstChild.firstChild.nodeValue;
-        for (var i in Data.channels) {
-            if (Data.channels[i].name == name) {
-                return Data.channels[i];
-            }
-        }
+        return Data.getChannelByName(name);
     }
     function openChannelId() {
         var c = openChannel();
@@ -106,12 +109,27 @@ UI = function() {
             tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Close Channel</span></li>",
             add: function(event, ui) {
                 $(ui.panel).append("<p><div class=\"chat ui-widget-content\"></div></p>");
+            },
+            select: function(event, ui) {
+                $("#playerlist > li").remove(); 
+                var chan = Data.getChannelByName(ui.tab.text);
+                for (var i = 0; i < chan.players.length; ++i) {
+                    addPlayerToList(Data.players[chan.players[i]]);
+                }
             }
         });
         $channels.tab_counter = 0;
-        $("#tabs span.ui-icon-close").live("click", function() {
-            var index = $("li", $tabs).index($( this ).parent());
+        $("#channels span.ui-icon-close").live("click", function() {
+            if ($channels.tabs("length") <= 1) return;
+            var index = $("li", $channels).index($( this ).parent());
             $channels.tabs("remove", index);
+            var name = $(this).parent()[0].firstChild.firstChild.nodeValue;
+            var channel = Data.getChannelByName(name);
+            Network.sendLeaveChannel(channel.id);
+        });
+        $("#playerlist li span[class=playerName]").live("click", function() {
+             var player = Data.getPlayerByName($(this).text());
+             PMDialog(player).dialog("moveToTop");
         });
 
         $("#chatmessage").keydown(function(ev) {
@@ -157,8 +175,40 @@ UI = function() {
         });
     }
 
+    var PMDialog = function(player) {
+        if (Data.PMs.hasOwnProperty(player.id)) {
+            return Data.PMs[player.id];
+        } else {
+            return createPMDialog(player);
+        }
+    }
+    var createPMDialog = function(player) {
+        pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
+            height: 220,
+            resize: function(ui, event) {
+                $(".chatdisplay", this).height($(this).height() - 53);
+            },
+            close: function(ui, event) {
+                delete Data.PMs[player.id];
+            },
+        });
+        $("input", pm_dialog).keydown(function(event) {
+            if (event.which == 13) {
+                var message = $(this).val();
+                $(this).val("");
+                var me = Data.player;
+                $(".chatdisplay", pm_dialog).append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
+                Network.sendSendPM(player.id, message);
+
+            }
+        });
+        pm_dialog.dialog("open");
+        Data.PMs[player.id] = pm_dialog;
+        return pm_dialog;
+    }
+
     var addPlayerToList = function(p) {
-        var item = "<li><span class='playerName' style=\"color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
+        var item = "<li><span class='playerName' style=\"cursor: pointer; color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
         var target = $('#playerlist li span[class=playerName]').filter(function() {
             return $(this).text() > p.name;
         }).eq(0);
@@ -171,7 +221,7 @@ UI = function() {
     }
 
     var addChannelToList = function(c) {
-        var item = $("<li>" + c.name + "</li>");
+        var item = $("<li><span class='channelName' style='cursor: pointer;'>" + c.name + "</span></li>");
         item.click(function(e) {
             Network.sendJoinChannel(c.name);
         });
@@ -294,9 +344,12 @@ UI = function() {
     Handler.prototype.JoinChannel = function(data) {
         var player = Data.players[data.playerId];
         var channel = Data.channels[data.chanId];
-        channel.players.push(player);
+        channel.players.push(player.id);
         if (openChannelId() === data.chanId) {
             addPlayerToList(player);
+        }
+        if (data.playerId == Data.player.id) {
+            $('#channellist span[class~=channelName]').filter(function(i) { return $(this).text() == channel.name; }).addClass('ui-state-active');
         }
         print(data.chanId, player.name + " joined " + channel.name + ".");
     }
@@ -305,11 +358,14 @@ UI = function() {
         var player = Data.players[data.playerId];
         var channel = Data.channels[data.chanId];
         print(data.chanId, player.name + " left " + channel.name + ".");
-        var i = channel.players.indexOf(player);
+        var i = channel.players.indexOf(player.id);
         if (i != -1)
             channel.players.splice(i,1);
         if (openChannelId() === data.chanId) {
             removePlayerFromList(player);
+        }
+        if (data.playerId == Data.player.id) {
+            $('#channellist span[class~=channelName]').filter(function(i) { return $(this).text() == channel.name; }).removeClass('ui-state-active');
         }
     }
 
@@ -351,30 +407,9 @@ UI = function() {
         var playerId = data.playerId;
         var message = data.message;
         var player = Data.players[playerId];
-        var pm_dialog;
-        if (Data.PMs.hasOwnProperty(playerId)) {
-            pm_dialog = Data.PMs[playerId];
-        } else {
-            // initialize PM dialog
-            pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
-                height: 220,
-                resize: function(ui, event) {
-                    $(".chatdisplay", this).height($(this).height() - 53);
-                },
-                close: function(ui, event) {
-                    delete Data.PMs[playerId];
-                },
-            });
-            $("input", pm_dialog).keydown(function(event) {
-                if (event.which == 13) {
-                    $(this).text("");
-                }
-            });
-            pm_dialog.dialog("open");
-            Data.PMs[playerId] = pm_dialog;
-        }
+        var pm_dialog = PMDialog(player);;
         var $chatdisplay = $(".chatdisplay", pm_dialog);
-        $chatdisplay.append(fancyName(userColour(player), player.name) + ": " + htmlEscape(message) + "<br>");
+        $chatdisplay.append(fancyName(userColour(player), player.name) + htmlEscape(message) + "<br>");
         $chatdisplay.height(pm_dialog.height() - 53);
         var plainElement = $chatdisplay[0];
         plainElement.scrollTop = plainElement.scrollHeight;

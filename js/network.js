@@ -52,6 +52,10 @@ Network = {
 
     sendAskForPass: function(password, salt) {
         this.sendJSON({type: 'AskForPass', password: password, salt: salt});
+    },
+
+    sendSendPM: function(playerId, message) {
+        this.sendJSON({type: 'SendPM', playerId: playerId, message: message})
     }
 }
 
