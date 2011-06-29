@@ -12,7 +12,11 @@ Network = {
                     console.log('Unknown event: ' + data.type);
                     return;
                 }
-                handler[data.type](data);
+                try {
+                    handler[data.type](data);
+                } catch(e) {
+                    alert("Handler for " + data.type + " returned error: " + e);
+                }
             } catch(e) {
                 alert("Couldn't parse '" + evt.data + "': "+e);
             }
@@ -32,6 +36,11 @@ Network = {
 
     sendJSON: function(o) {
         this.ws.send(JSON.stringify(o));
+    },
+
+    sendConnect: function(ip, port) {
+        alert("Connecting " + ip + ":" + port);
+        this.sendJSON({type: 'Connect', ip: ip, port: parseInt(port)});
     },
 
     sendChannelMessage: function(chanId, message) {

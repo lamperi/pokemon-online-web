@@ -3,6 +3,8 @@ from twisted.web import resource
 from twisted.web.static import File
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.protocols.basic import Int16StringReceiver
+from twisted.internet import reactor
+from twisted.internet.defer import Deferred
 
 from websocket import WebSocketHandler, WebSocketSite
 
@@ -10,8 +12,21 @@ from struct import pack, unpack
 from json import loads, dumps
 from hashlib import md5
 
-from poprotocol import POProtocol
+from poprotocol import POProtocol, RegistryProtocol
 from teamloader import loadTeam
+
+class Registry(RegistryProtocol):
+
+    def __init__(self):
+        RegistryProtocol.__init__(self)
+        self.servers = []
+        self.deferred = Deferred()
+
+    def onPlayersList(self, name, desc, numplayers, ip, maxplayers, port):
+        self.servers.append([name, desc, numplayers, ip, maxplayers, port])
+
+    def onServerListEnd(self):
+        self.deferred.callback(self.servers)
 
 class Receiver(POProtocol):
 
@@ -141,12 +156,38 @@ class POhandler(WebSocketHandler):
     def __del__(self):
         print 'Deleting handler'
 
+    def connectionMade(self):
+        print 'Connected to client.'
+        factory = Factory()
+        factory.protocol = Registry
+        point = TCP4ClientEndpoint(reactor, "pokemon-online.dynalias.net", 5081)
+        d = point.connect(factory)
+
+
+        def gotRegistry(registry):
+            def gotServerList(servers):
+                self.sendObject({'type': 'ServerList', 'servers': servers})
+                registry.transport.loseConnection()
+            registry.deferred.addCallback(gotServerList)
+
+        d.addCallback(gotRegistry)
+        d.addErrback(self.cantConnect)
+
     def frameReceived(self, frame):
+        json = loads(frame)
+        if not json.has_key("type"):
+            return
+
+        if json["type"] == "Connect":
+            ip = json.get("ip", None)
+            port = json.get("port", None)
+            if ip and port:
+                self.createProxyConnection(ip, port)
+                return
+
         if not self.proxy:
             self.pending.append(frame)
-            return;
-
-        json = loads(frame)
+            return
 
         try:
             method = "on{0}".format(json["type"])
@@ -163,25 +204,25 @@ class POhandler(WebSocketHandler):
         print dumps(o)
         self.transport.write(dumps(o))
 
-    def connectionMade(self):
-        print 'Connected to client.'
-        
+    def createProxyConnection(self, ip, port):
         factory = Factory()
         factory.protocol = Receiver
-        point = TCP4ClientEndpoint(reactor, "84.20.150.28", 8080)
+        point = TCP4ClientEndpoint(reactor, ip, port)
         d = point.connect(factory)
         d.addCallback(self.gotProxy)
         d.addErrback(self.cantConnect)
 
     def connectionLost(self, reason):
         print 'Lost connection.'
-        self.proxy.transport.loseConnection()
+        if self.proxy:
+            self.proxy.transport.loseConnection()
         self.proxy = None
 
     def gotProxy(self, proxy):
         print "Connected!"
         self.proxy = proxy
         proxy.client = self
+        self.proxy.setProxyIP("127.0.0.1")
         for p in self.pending:
             self.frameReceived(p)
 
@@ -218,6 +259,7 @@ class POhandler(WebSocketHandler):
         self.proxy.sendPM(json['playerId'], json['message'])
 
 
+
 class FlashSocketPolicy(Protocol):
     """ A simple Flash socket policy server.
     See: http://www.adobe.com/devnet/flashplayer/articles/socket_policy_files.html
@@ -232,8 +274,6 @@ class FlashSocketPolicy(Protocol):
 
 
 if __name__ == "__main__":
-    from twisted.internet import reactor
-
     # run our websocket server
     # serve index.html from the local directory
     root = File('.')

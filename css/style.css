@@ -15,8 +15,19 @@ html, body {
 	width: 28%;
 }
 
-#channels { margin-top: 1em; }
-#channels li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }
+#channels {
+	margin-top: 1em;
+}
+#channels li .ui-icon-close {
+	float: left;
+	margin: 0.4em 0.2em 0 0;
+	cursor: pointer;
+}
+
+#playerlist, #channellist, #battlelist {
+       list-style: none;
+}
+
 
 #main {
 	width: 69%;
@@ -34,19 +45,13 @@ html, body {
 	float: right;
 }
 
-ul.potabs {
-	list-style: none;
-}
-
-ul.potabs li {
-	display: inline;
-}
-
-#playerlist, #channellist, #battlelist {
-	list-style: none;
-}
-
 .frames {
 	border-style: solid;
 	border-color: blue;
+}
+
+#dialog-connect-servers-container {
+	max-height:300px;
+	overflow:scroll;
+
 }

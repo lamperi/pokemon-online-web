@@ -104,13 +104,17 @@ UI = function() {
     }
 
     function init() {
+        // Creating tabs on Players / Battles / Channels
         $tabs = $('#tabs').tabs();
+
+        // Creating channels tabs and it's functionality
         $channels = $('#channels').tabs({
             tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Close Channel</span></li>",
             add: function(event, ui) {
                 $(ui.panel).append("<p><div class=\"chat ui-widget-content\"></div></p>");
             },
             select: function(event, ui) {
+                // Re-create the playerlist when selecting another channel
                 $("#playerlist > li").remove(); 
                 var chan = Data.getChannelByName(ui.tab.text);
                 for (var i = 0; i < chan.players.length; ++i) {
@@ -127,11 +131,14 @@ UI = function() {
             var channel = Data.getChannelByName(name);
             Network.sendLeaveChannel(channel.id);
         });
+
+        // Open PM Dialog when clicking player name
         $("#playerlist li span[class=playerName]").live("click", function() {
              var player = Data.getPlayerByName($(this).text());
              PMDialog(player).dialog("moveToTop");
         });
 
+        // Widgets below channels tabs
         $("#chatmessage").keydown(function(ev) {
              if (ev.which == 13) { // enter
                  ev.preventDefault();
@@ -154,8 +161,7 @@ UI = function() {
         });
         $("#registerbutton").button("disable");
 
-        $("#dialog:ui-dialog").dialog( "destroy" );
-                    
+        // Initializing password dialog prompt
         $("#dialog-password").dialog({
              autoOpen: false,
              height: 200,
@@ -172,6 +178,18 @@ UI = function() {
         $("#dialog-password-cancel").click(function() {
             $("#dialog-password").dialog("close");
             $("#dialog-password-input").val("");
+        });
+
+        // Initializing connection dialog prompt
+        $("#dialog-connect").dialog({
+            autoOpen: true,
+            modal: true,
+            width: 800,
+            position: "top",
+        });
+        $("#dialog-connect-ok").click(function() {
+            $("#dialog-connect").dialog("close");
+            Network.sendConnect($("#dialog-connect-input-ip").val(), $("#dialog-connect-input-port").val());
         });
     }
 
@@ -322,7 +340,7 @@ UI = function() {
     }
 
     Handler.prototype.ChannelPlayers = function(data) {
-
+        // Create channel when ChannelPlayers is send
         $channels.tabs("add", "#channels-" + $channels.tab_counter, Data.channels[data.chanId].name);
         Data.channels[data.chanId].chatWidget = "#channels-" + $channels.tab_counter;
         $channels.tab_counter++;
@@ -413,6 +431,21 @@ UI = function() {
         $chatdisplay.height(pm_dialog.height() - 53);
         var plainElement = $chatdisplay[0];
         plainElement.scrollTop = plainElement.scrollHeight;
+    }
+
+    Handler.prototype.ServerList = function(data) {
+        var table = ["<table class='server-listing'><tr><th>Server Name</th><th>Players</th><th>Connection</th></tr>"];
+        for (var i = 0; i < data.servers.length; ++i) {
+            var maxPlayers = data.servers[i][4] == 0 ? '' : "/" + data.servers[i][4];
+            table.push("<tr><td>" + data.servers[i][0] + "</td><td>" + data.servers[i][2] + maxPlayers + "</td><td>" + data.servers[i][3] + ":" + data.servers[i][5] + "</td></tr>"); 
+        }
+        table.push("</table>");
+        $("#dialog-connect-servers-container").append(table.join(""));
+        $(".server-listing tr").click(function() {
+            var ip_port = $(":nth-child(3)", this).text().split(":");
+            $("#dialog-connect-input-ip").val(ip_port[0]);
+            $("#dialog-connect-input-port").val(ip_port[1]);
+        });
     }
 
     return {
