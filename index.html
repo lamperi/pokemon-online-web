@@ -12,6 +12,7 @@
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <script type="text/javascript" src="js/jquery-1.5.1.min.js"></script>
         <script type="text/javascript" src="js/jquery-ui-1.8.13.custom.min.js"></script>
+        <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
         <script type="text/javascript" src="js/theme.js"></script>
         <script type="text/javascript" src="js/ui.js"></script>
         <script type="text/javascript" src="js/network.js"></script>
@@ -67,7 +68,14 @@
                 <input id="dialog-connect-input-ip" type="text" value="valssi.fixme.fi">
                 <input id="dialog-connect-input-port" type="text" value="5080">
                 <button id="dialog-connect-ok">Connect!</button>
-                <div id="dialog-connect-servers-container"></div>
+                <div id="dialog-connect-servers-container">
+                    <table id="server-listing">
+                        <thead>
+                            <tr><th>Server Name</th><th>Players</th><th>Connection</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </body>

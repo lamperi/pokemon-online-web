@@ -191,6 +191,17 @@ UI = function() {
             $("#dialog-connect").dialog("close");
             Network.sendConnect($("#dialog-connect-input-ip").val(), $("#dialog-connect-input-port").val());
         });
+
+        // table sorter
+        $.tablesorter.addParser({
+            id: 'count',
+            type: 'numeric',
+            is: function() { return false; },
+            format: function(s) {
+                return s.split("/")[0]
+            } 
+        });
+
     }
 
     var PMDialog = function(player) {
@@ -434,18 +445,19 @@ UI = function() {
     }
 
     Handler.prototype.ServerList = function(data) {
-        var table = ["<table class='server-listing'><tr><th>Server Name</th><th>Players</th><th>Connection</th></tr>"];
+        var table = [];
         for (var i = 0; i < data.servers.length; ++i) {
             var maxPlayers = data.servers[i][4] == 0 ? '' : "/" + data.servers[i][4];
             table.push("<tr><td>" + data.servers[i][0] + "</td><td>" + data.servers[i][2] + maxPlayers + "</td><td>" + data.servers[i][3] + ":" + data.servers[i][5] + "</td></tr>"); 
         }
-        table.push("</table>");
-        $("#dialog-connect-servers-container").append(table.join(""));
-        $(".server-listing tr").click(function() {
+        alert($("#server-listing tbody").length);
+        $("#server-listing tbody").append(table.join(""));
+        $("#server-listing tr").click(function() {
             var ip_port = $(":nth-child(3)", this).text().split(":");
             $("#dialog-connect-input-ip").val(ip_port[0]);
             $("#dialog-connect-input-port").val(ip_port[1]);
         });
+        $("#server-listing").tablesorter({headers: {1: {sorter: 'count'}}, widgets: ['zebra'], sortList: [[1,1], [0,0]]});
     }
 
     return {

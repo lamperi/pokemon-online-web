@@ -39,7 +39,6 @@ Network = {
     },
 
     sendConnect: function(ip, port) {
-        alert("Connecting " + ip + ":" + port);
         this.sendJSON({type: 'Connect', ip: ip, port: parseInt(port)});
     },
 
