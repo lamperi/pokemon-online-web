@@ -450,7 +450,6 @@ UI = function() {
             var maxPlayers = data.servers[i][4] == 0 ? '' : "/" + data.servers[i][4];
             table.push("<tr><td>" + data.servers[i][0] + "</td><td>" + data.servers[i][2] + maxPlayers + "</td><td>" + data.servers[i][3] + ":" + data.servers[i][5] + "</td></tr>"); 
         }
-        alert($("#server-listing tbody").length);
         $("#server-listing tbody").append(table.join(""));
         $("#server-listing tr").click(function() {
             var ip_port = $(":nth-child(3)", this).text().split(":");
