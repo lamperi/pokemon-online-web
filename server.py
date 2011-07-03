@@ -223,7 +223,7 @@ class POhandler(WebSocketHandler):
         print "Connected!"
         self.proxy = proxy
         proxy.client = self
-        self.proxy.setProxyIP("127.0.0.1")
+        self.proxy.setProxyIP(self.proxy.transport.getHost().host)
         for p in self.pending:
             self.frameReceived(p)
 
