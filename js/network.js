@@ -33,6 +33,10 @@ Network = {
         }
     },
 
+    disconnect: function() {
+        this.ws.close();
+    },
+
     sendJSON: function(o) {
         this.ws.send(JSON.stringify(o));
     },

@@ -583,6 +583,11 @@ UI = function() {
         printAll("<span style='color: red;'><b>" + player.name + " was banned by " + src.name + "</b></span>"); 
     }
 
+    Handler.prototype.Disconnected = function(data) {
+        printAll("<i>Disconnected. Reason: " + data.reason + "</i>");
+        Network.disconnect();
+    }
+
     return {
         init: init,
         Handler: Handler,

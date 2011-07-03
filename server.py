@@ -145,6 +145,7 @@ class Receiver(POProtocol):
 
     def connectionLost(self, reason):
         if self.client:
+            self.client.sendObject({'type': 'Disconnected', 'reason': str(reason)})
             self.client = None
 
 class POhandler(WebSocketHandler):
