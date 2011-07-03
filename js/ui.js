@@ -24,8 +24,22 @@ Logic = function() {
         return this.flags & this.State.Battling;
     }
 
+    Player.prototype.setBattling = function(yes) {
+        if (yes)
+            this.flags |= this.State.Battling;
+        else
+            this.flags &= ~this.State.Battling;
+    }
+
     Player.prototype.isAway = function() {
         return this.flags & this.State.Away;
+    }
+
+    Player.prototype.setAway = function(yes) {
+        if (yes)
+            this.flags |= this.State.Away;
+        else
+            this.flags &= ~this.State.Away;
     }
 
     Player.prototype.authString = function() {
@@ -89,6 +103,10 @@ UI = function() {
     var $tabs;
     var $channels;
 
+    var pageLayout;
+    var centerLayout;
+    var mainLayout;
+
     var salt;
 
     function openChannel() {
@@ -102,7 +120,15 @@ UI = function() {
         var c = openChannel();
         return c !== undefined ? c.id : undefined;
     }
-
+/*
+    function resizeChat() {
+        alert($("#channels").outerHeight() + " " + $("#channels > ul").outerHeight() + " " + $("#channels .ui-tab-panel").height());
+        $("#channels .ui-tab-panel").height( $("#channels").outerHeight() - $("#channels > ul").outerHeight() );
+        alert($("#channels").outerHeight() + " " + $("#channels > ul").outerHeight() + " " + $("#channels .ui-tab-panel").height());
+        $(".chat").height( $("#channels .ui-tab-panel").height() - 30 );
+    }
+    setInterval(resizeChat, 5000);
+*/
     function init() {
         // Creating tabs on Players / Battles / Channels
         $tabs = $('#tabs').tabs();
@@ -111,7 +137,10 @@ UI = function() {
         $channels = $('#channels').tabs({
             tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Close Channel</span></li>",
             add: function(event, ui) {
-                $(ui.panel).append("<p><div class=\"chat ui-widget-content\"></div></p>");
+                $(ui.panel).addClass("chatWrapper");
+                $(ui.panel).append("<div class=\"chat ui-widget-content\"></div>");
+                foobar = ui.panel;
+                $(ui.panel).outerHeight($(ui.panel).parent().height() - 30);
             },
             select: function(event, ui) {
                 // Re-create the playerlist when selecting another channel
@@ -120,6 +149,10 @@ UI = function() {
                 for (var i = 0; i < chan.players.length; ++i) {
                     addPlayerToList(Data.players[chan.players[i]]);
                 }
+            },
+            show: function (evt, ui) {
+                var tabLayout = $(ui.panel).data("layout");
+                if (tabLayout) tabLayout.resizeAll();
             }
         });
         $channels.tab_counter = 0;
@@ -190,6 +223,7 @@ UI = function() {
         $("#dialog-connect-ok").click(function() {
             $("#dialog-connect").dialog("close");
             Network.sendConnect($("#dialog-connect-input-ip").val(), $("#dialog-connect-input-port").val());
+            Network.sendLogin($("#dialog-connect-input-name").val());
         });
 
         // table sorter
@@ -200,8 +234,36 @@ UI = function() {
             format: function(s) {
                 return s.split("/")[0]
             } 
+
         });
 
+        pageLayout = $('body').layout({ 
+            name: "pageLayout",
+            center__paneSelector: "#centerWrapper",
+            north__paneSelector: "#header",
+            south__paneSelector: "#footer",
+            closable: true, 
+            resizable: false, 
+            slidable: false, 
+            south__initClosed: true, 
+            north__initClosed: true,
+//            center__onresize: "resizeTabLayout"
+        });
+        centerLayout = $('#centerWrapper').layout({
+            name: "centerLayout",
+            west__paneSelector: "#tabs",
+            center__paneSelector: "#main",
+            west__minSize: 200,
+            west__size: 380
+        });
+
+        mainLayout = $('#main').layout({
+            name: "mainLayout",
+            center__paneSelector: "#channels",
+            north__paneSelector: "#announcement",
+            south__paneSelector: "#buttons",
+//            center__onresize: "resizeTabLayout",
+        });
     }
 
     var PMDialog = function(player) {
@@ -236,21 +298,34 @@ UI = function() {
         return pm_dialog;
     }
 
+    var getPlayerFromList = function(id) {
+        return $('#player_' + id);
+    }
+    var getPlayerFromListByName = function(name) {
+        return $('#playerlist span[class=playerName]').filter(function(i) { return $(this).text() == name; }).parent();
+    }
+
+    var updatePlayerInList = function(player) {
+        var li = getPlayerFromList(player.id);
+        $("span[class=playerName]", li).text(player.name);
+        $("span[class~=theme-icon]", li).attr("class", "ui-icon theme-icon theme-icon-" + player.authString() + "-" + player.statusString());
+    }
+
     var addPlayerToList = function(p) {
-        var item = "<li><span class='playerName' style=\"cursor: pointer; color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
+        var item = "<li id='player_" + p.id + "'><span class='playerName' style=\"cursor: pointer; color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
         var target = $('#playerlist li span[class=playerName]').filter(function() {
             return $(this).text() > p.name;
         }).eq(0);
-        if (target.length > 0) target.before(item);
+        if (target.length > 0) target.parent().before(item);
         else $('#playerlist').append(item);
     }
     var removePlayerFromList = function(p) {
-        var li = $('#playerlist span[class=playerName]').filter(function(i) { return $(this).text() == p.name; }).parent();
+        var li = getPlayerFromList(p.id);
         li.remove();
     }
 
     var addChannelToList = function(c) {
-        var item = $("<li><span class='channelName' style='cursor: pointer;'>" + c.name + "</span></li>");
+        var item = $("<li id='channel_" + c.id + "'><span class='channelName' style='cursor: pointer;'>" + c.name + "</span></li>");
         item.click(function(e) {
             Network.sendJoinChannel(c.name);
         });
@@ -263,11 +338,17 @@ UI = function() {
 
     var print = function(channelId, message) {
         var chat = $("#channels #" + Data.channels[channelId].chatWidget + " div.chat");
+        var h = chat.parent().height();
         chat.append(message + "<br>");
+        chat.outerHeight(h);
+        $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
     var printAll = function(message) {
         var chat = $("#channels div.chat");
+        var h = chat.parent().height();
         chat.append(message + "<br>");
+        chat.outerHeight(h);
+        $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
 
     var getColour = function(user, name) {
@@ -331,6 +412,7 @@ UI = function() {
 
     Handler.prototype.Announcement = function(data) {
        $('#announcement').html(data.announcement);
+       mainLayout.resizeAll();
     }
 
     Handler.prototype.Login = function(data) {
@@ -378,7 +460,7 @@ UI = function() {
             addPlayerToList(player);
         }
         if (data.playerId == Data.player.id) {
-            $('#channellist span[class~=channelName]').filter(function(i) { return $(this).text() == channel.name; }).addClass('ui-state-active');
+            $('#channel_' + channel.id + ' span').addClass('ui-state-active');
         }
         print(data.chanId, player.name + " joined " + channel.name + ".");
     }
@@ -394,7 +476,7 @@ UI = function() {
             removePlayerFromList(player);
         }
         if (data.playerId == Data.player.id) {
-            $('#channellist span[class~=channelName]').filter(function(i) { return $(this).text() == channel.name; }).removeClass('ui-state-active');
+            $('#channel_' + channel.id + ' span').removeClass('ui-state-active');
         }
     }
 
@@ -459,9 +541,20 @@ UI = function() {
         $("#server-listing").tablesorter({headers: {1: {sorter: 'count'}}, widgets: ['zebra'], sortList: [[1,1], [0,0]]});
     }
 
+    Handler.prototype.SendTeam = function(data) {
+        var player = Data.players[data.player.id] = new Logic.Player(data.player);
+        updatePlayerInList(player);
+    }
+
+    Handler.prototype.Away = function(data) {
+        var player = Data.players[data.playerId];
+        player.setAway(data.isAway);
+        updatePlayerInList(player);
+    }
+
     return {
         init: init,
-        Handler: Handler
+        Handler: Handler,
     }
 }();
 

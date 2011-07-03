@@ -24,7 +24,6 @@ Network = {
     
         ws.onopen = function(evt) {
             $('#conn_status').html('<b>Connected</b>');
-            Network.sendJSON({type: 'Login', name: 'Lamp'+String(Math.random()).substring(0,4)});
         }
         ws.onerror = function(evt) {
             $('#conn_status').html('<b>Error</b>');
@@ -40,6 +39,10 @@ Network = {
 
     sendConnect: function(ip, port) {
         this.sendJSON({type: 'Connect', ip: ip, port: parseInt(port)});
+    },
+
+    sendLogin: function(name) {
+        this.sendJSON({type: 'Login', name: name ? name : 'Lamp'+String(Math.random()).substring(0,4)});
     },
 
     sendChannelMessage: function(chanId, message) {

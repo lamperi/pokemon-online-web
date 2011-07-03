@@ -8,11 +8,17 @@ html, body {
 
 #wrap {
 	width: 1200px;
+	width: 90%;
 	margin: 0 auto;
 }
 
 #tabs {
-	width: 28%;
+	height: 100%;
+}
+
+
+#main {
+	height: 100%;
 }
 
 #channels {
@@ -28,30 +34,26 @@ html, body {
        list-style: none;
 }
 
-
-#main {
-	width: 69%;
-}
-
-#footer {
-	clear: both;
-}
-
-.left {
-	float: left;
-}
-
-.right {
-	float: right;
-}
-
-.frames {
-	border-style: solid;
-	border-color: blue;
-}
-
 #dialog-connect-servers-container {
 	max-height:300px;
 	overflow:scroll;
 
+}
+
+/* Layout */
+
+.container {
+	/* used for elements that should not have padding or scrollbars */
+	padding:	0;
+	overflow:	hidden;
+}
+
+.chatWrapper {
+	min-height:	100px;
+}
+
+.chat {
+	overflow:	hidden;
+	overflow-y:	scroll;
+	position:	relative;
 }
