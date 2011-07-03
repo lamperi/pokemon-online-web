@@ -325,7 +325,7 @@ UI = function() {
     }
 
     var addPlayerToList = function(p) {
-        var item = "<li id='player_" + p.id + "'><span class='playerName' style=\"cursor: pointer; color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
+        var item = "<li style='clear: both;' id='player_" + p.id + "'><span class='playerName' style=\"cursor: pointer; color:"+getColour(p)+"\">" + p.name + "</span><span class=\"ui-icon theme-icon theme-icon-" + p.authString() + "-" + p.statusString() + "\">status</span></li>";
         var target = $('#playerlist li span[class=playerName]').filter(function() {
             return $(this).text() > p.name;
         }).eq(0);
@@ -335,6 +335,17 @@ UI = function() {
     var removePlayerFromList = function(p) {
         var li = getPlayerFromList(p.id);
         li.remove();
+    }
+
+    var removePlayer = function(player) {
+        for (var i in Data.channels) {
+            var channel = Data.channels[i];
+            var i = channel.players.indexOf(player);
+            if (i != -1)
+                channel.players.splice(i,1);
+        }
+        // remove in any case
+        removePlayerFromList(player);
     }
 
     var addChannelToList = function(c) {
@@ -496,15 +507,9 @@ UI = function() {
 
     Handler.prototype.Logout = function(data) {
         var player = Data.players[data.playerId];
-        for (var i in Data.channels) {
-            var channel = Data.channels[i];
-            var i = channel.players.indexOf(player);
-            if (i != -1)
-                channel.players.splice(i,1);
-        }
-        // remove in any case
-        removePlayerFromList(player);
+        removePlayer(player);
         print(data.chanId, player.name + " quit.");
+        delete Data.players[data.playerId];
     }
 
     Handler.prototype.ChannelMessage = function(data) {
@@ -564,6 +569,18 @@ UI = function() {
         var player = Data.players[data.playerId];
         player.setAway(data.isAway);
         updatePlayerInList(player);
+    }
+
+    Handler.prototype.PlayerKick = function(data) {
+        var player = Data.players[data.playerId];
+        var src = Data.players[data.srcId];
+        printAll("<span style='color: red;'><b>" + player.name + " was kicked by " + src.name + "</b></span>"); 
+    }
+
+    Handler.prototype.PlayerBan = function(data) {
+        var player = Data.players[data.playerId];
+        var src = Data.players[data.srcId];
+        printAll("<span style='color: red;'><b>" + player.name + " was banned by " + src.name + "</b></span>"); 
     }
 
     return {

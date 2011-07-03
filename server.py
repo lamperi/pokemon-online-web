@@ -78,11 +78,11 @@ class Receiver(POProtocol):
         player = self.serializePlayer(playerInfo)
         self.client.sendObject({'type': 'PlayersList', 'player': player})
 
-    def onPlayerBan(self, player):
-        self.client.sendObject({'type': 'PlayerBan', 'playerId': id})
+    def onPlayerBan(self, playerId, srcId):
+        self.client.sendObject({'type': 'PlayerBan', 'playerId': playerId, 'srcId': srcId})
 
-    def onPlayerKick(self, player):
-        self.client.sendObject({'type': 'PlayerKick', 'playerId': id})
+    def onPlayerKick(self, playerId, srcId):
+        self.client.sendObject({'type': 'PlayerKick', 'playerId': playerId, 'srcId': srcId})
 
     def onSendTeam(self, playerInfo):
         player = self.serializePlayer(playerInfo)
@@ -281,8 +281,8 @@ if __name__ == "__main__":
     site.addHandler('/test', POhandler)
     reactor.listenTCP(8080, site)
     # run policy file server
-    factory = Factory()
-    factory.protocol = FlashSocketPolicy
-    reactor.listenTCP(843, factory)
+    #factory = Factory()
+    #factory.protocol = FlashSocketPolicy
+    #reactor.listenTCP(843, factory)
     reactor.run()
 
