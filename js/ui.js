@@ -103,9 +103,12 @@ UI = function() {
     var $tabs;
     var $channels;
 
+/*
     var pageLayout;
     var centerLayout;
     var mainLayout;
+    var channelsLayout;
+*/
 
     var salt;
 
@@ -120,15 +123,7 @@ UI = function() {
         var c = openChannel();
         return c !== undefined ? c.id : undefined;
     }
-/*
-    function resizeChat() {
-        alert($("#channels").outerHeight() + " " + $("#channels > ul").outerHeight() + " " + $("#channels .ui-tab-panel").height());
-        $("#channels .ui-tab-panel").height( $("#channels").outerHeight() - $("#channels > ul").outerHeight() );
-        alert($("#channels").outerHeight() + " " + $("#channels > ul").outerHeight() + " " + $("#channels .ui-tab-panel").height());
-        $(".chat").height( $("#channels .ui-tab-panel").height() - 30 );
-    }
-    setInterval(resizeChat, 5000);
-*/
+
     function init() {
         // Creating tabs on Players / Battles / Channels
         $tabs = $('#tabs').tabs();
@@ -136,10 +131,18 @@ UI = function() {
         // Creating channels tabs and it's functionality
         $channels = $('#channels').tabs({
             tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Close Channel</span></li>",
-            //panelTemplate: "<div class='chatWrapper'><div class=\"chat ui-widget-content\"></div></div>",
-            panelTemplate: "<div class=\"chat ui-widget\"></div>",
+            panelTemplate: "<div class='chatWrapper'><div class=\"chat ui-widget-content\"></div></div>",
             add: function(event, ui) {
-                makeFit(ui.panel);
+                $("#tabPanels").append(ui.panel);
+                var myLayout = $(ui.panel).layout({
+                    center__paneSelector: '.chat',
+                    initPanes: false,
+                    spacing_open: 0,
+                    spacing_closed: 0,
+                    resizeWithWindow: false,
+                });
+                mainLayout.resizeAll();
+                myLayout.resizeAll();
             },
             select: function(event, ui) {
                 // Re-create the playerlist when selecting another channel
@@ -149,10 +152,7 @@ UI = function() {
                     addPlayerToList(Data.players[chan.players[i]]);
                 }
             },
-            show: function (evt, ui) {
-                var tabLayout = $(ui.panel).data("layout");
-                if (tabLayout) tabLayout.resizeAll();
-            }
+            show: $.layout.callbacks.resizeTabLayout
         });
         $channels.tab_counter = 0;
         $("#channels span.ui-icon-close").live("click", function() {
@@ -258,26 +258,25 @@ UI = function() {
         mainLayout = $('#main').layout({
             name: "mainLayout",
             resizable: false,
+            spacing_open: 0,
+            spacing_closed: 0,
             center__paneSelector: "#channels",
             north__paneSelector: "#announcement",
             south__paneSelector: "#buttons",
-            center__onresize: function() { 
-                var index = $channels.tabs('option', 'selected');
-                var panel =  $(".ui-tabs-panel", $channels)[index]
-                makeFit(panel);
-            },
         });
-    }
-    $(window).resize(function() {
-        var index = $channels.tabs('option', 'selected');
-        var panel =  $(".ui-tabs-panel", $channels)[index];
-        makeFit(panel);
-    });
-
-    var makeFit = function(panel) {
-        //if (window.global_foo === undefined) { window.global_foo = 0; window.global_bar = []; }
-        //window.global_bar[window.global_foo++] = panel; 
-        $(panel).outerHeight($(panel).parent().height() - 40);
+        channelsLayout = $('#channels').layout({
+            name: "channelsLayout",
+            resizable: false,
+            triggerEventsOnLoad: false,
+            spacing_open: 0,
+            spacing_closed: 0,
+            center__paneSelector: "#tabPanels",
+            north__paneSelector: "#tabButtons",
+            center__onresize: 
+            function() {
+                $('.chatWrapper').data("layout").resizeAll();
+            }
+        });
     }
 
     var PMDialog = function(player) {
@@ -351,20 +350,16 @@ UI = function() {
     }
 
     var print = function(channelId, message) {
-        var chat = $("#channels " + Data.channels[channelId].chatWidget);// + " div.chat");
-        //var h = chat.parent().height();
+        var chat = $("#channels " + Data.channels[channelId].chatWidget + " div.chat");
         var h = chat.height();
         chat.append(message + "<br>");
-        //chat.outerHeight(h);
         chat.height(h);
         $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
     var printAll = function(message) {
         var chat = $("#channels div.chat");
-        //var h = chat.parent().height();
         var h = chat.height();
         chat.append(message + "<br>");
-        //chat.outerHeight(h);
         chat.height(h);
         $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
@@ -411,7 +406,8 @@ UI = function() {
                 user = "<i>+" + user + "</i>";
             }
             var colour = getColour(player, user);
-            return fancyName(colour, user) + htmlEscape(message);
+            var escaped = player && player.auth > 3 ? message : htmlEscape(message);
+            return fancyName(colour, user) + escaped;
         } else {
             return htmlEscape(message);
         }

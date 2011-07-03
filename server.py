@@ -281,8 +281,8 @@ if __name__ == "__main__":
     site.addHandler('/test', POhandler)
     reactor.listenTCP(8080, site)
     # run policy file server
-    #factory = Factory()
-    #factory.protocol = FlashSocketPolicy
-    #reactor.listenTCP(843, factory)
+    factory = Factory()
+    factory.protocol = FlashSocketPolicy
+    reactor.listenTCP(843, factory)
     reactor.run()
 

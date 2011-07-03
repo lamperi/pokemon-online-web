@@ -29,6 +29,20 @@ html, body {
 	margin: 0.4em 0.2em 0 0;
 	cursor: pointer;
 }
+#tabs {
+	position: static !important;
+}
+#tabPanels {
+	margin:	0 !important;
+}
+#tabButtons {
+	min-height: 30px;
+}
+.chatWrapper {
+	height: 100%;
+	margin: 0 !important;
+	padding: 0 !important;
+}
 
 #playerlist, #channellist, #battlelist {
        list-style: none;
@@ -49,7 +63,10 @@ html, body {
 }
 
 .chat {
-	min-height:	100px;
+	height:		80%;
+	padding:	0;
+	margin:		0;
+	border:		0;
 	overflow:	hidden;
 	overflow-y:	scroll;
 	position:	relative;

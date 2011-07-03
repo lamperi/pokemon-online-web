@@ -10,6 +10,14 @@
         -->
         <link rel="stylesheet" type="text/css" href="css/cupertino/jquery-ui-1.8.13.custom.css">
         <link rel="stylesheet" type="text/css" href="css/style.css">
+        <!--
+        <script type="text/javascript" src="js/websocket/swfobject.js"></script>
+        <script type="text/javascript" src="js/websocket/web_socket.js"></script>
+        <script type="text/javascript">
+WEB_SOCKET_SWF_LOCATION = "js/websocket/WebSocketMain.swf";
+WEB_SOCKET_DEBUG = true;
+	</script>
+        -->
         <script type="text/javascript" src="js/jquery-1.5.1.min.js"></script>
         <script type="text/javascript" src="js/jquery-ui-1.8.13.custom.min.js"></script>
         <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
@@ -46,8 +54,10 @@
             <div id="main" class="ui-layout-content ui-widget ui-corner-all content">
                 <div id="announcement" class="ui-widget ui-corner-all ui-widget-content"></div>
                 <div id="channels" class="">
-                    <ul class="potabs">
+                    <ul id="tabButtons" class="potabs container">
                     </ul>
+                    <div id="tabPanels" class="container">
+                    </div>
                 </div>
                 <div id="buttons">
                     <input type="text" id="chatmessage" name="chatmessage">
