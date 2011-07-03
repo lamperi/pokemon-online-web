@@ -136,11 +136,10 @@ UI = function() {
         // Creating channels tabs and it's functionality
         $channels = $('#channels').tabs({
             tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Close Channel</span></li>",
+            //panelTemplate: "<div class='chatWrapper'><div class=\"chat ui-widget-content\"></div></div>",
+            panelTemplate: "<div class=\"chat ui-widget\"></div>",
             add: function(event, ui) {
-                $(ui.panel).addClass("chatWrapper");
-                $(ui.panel).append("<div class=\"chat ui-widget-content\"></div>");
-                foobar = ui.panel;
-                $(ui.panel).outerHeight($(ui.panel).parent().height() - 30);
+                makeFit(ui.panel);
             },
             select: function(event, ui) {
                 // Re-create the playerlist when selecting another channel
@@ -247,7 +246,6 @@ UI = function() {
             slidable: false, 
             south__initClosed: true, 
             north__initClosed: true,
-//            center__onresize: "resizeTabLayout"
         });
         centerLayout = $('#centerWrapper').layout({
             name: "centerLayout",
@@ -259,11 +257,27 @@ UI = function() {
 
         mainLayout = $('#main').layout({
             name: "mainLayout",
+            resizable: false,
             center__paneSelector: "#channels",
             north__paneSelector: "#announcement",
             south__paneSelector: "#buttons",
-//            center__onresize: "resizeTabLayout",
+            center__onresize: function() { 
+                var index = $channels.tabs('option', 'selected');
+                var panel =  $(".ui-tabs-panel", $channels)[index]
+                makeFit(panel);
+            },
         });
+    }
+    $(window).resize(function() {
+        var index = $channels.tabs('option', 'selected');
+        var panel =  $(".ui-tabs-panel", $channels)[index];
+        makeFit(panel);
+    });
+
+    var makeFit = function(panel) {
+        //if (window.global_foo === undefined) { window.global_foo = 0; window.global_bar = []; }
+        //window.global_bar[window.global_foo++] = panel; 
+        $(panel).outerHeight($(panel).parent().height() - 40);
     }
 
     var PMDialog = function(player) {
@@ -337,17 +351,21 @@ UI = function() {
     }
 
     var print = function(channelId, message) {
-        var chat = $("#channels #" + Data.channels[channelId].chatWidget + " div.chat");
-        var h = chat.parent().height();
+        var chat = $("#channels " + Data.channels[channelId].chatWidget);// + " div.chat");
+        //var h = chat.parent().height();
+        var h = chat.height();
         chat.append(message + "<br>");
-        chat.outerHeight(h);
+        //chat.outerHeight(h);
+        chat.height(h);
         $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
     var printAll = function(message) {
         var chat = $("#channels div.chat");
-        var h = chat.parent().height();
+        //var h = chat.parent().height();
+        var h = chat.height();
         chat.append(message + "<br>");
-        chat.outerHeight(h);
+        //chat.outerHeight(h);
+        chat.height(h);
         $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
 

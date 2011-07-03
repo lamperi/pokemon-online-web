@@ -48,11 +48,8 @@ html, body {
 	overflow:	hidden;
 }
 
-.chatWrapper {
-	min-height:	100px;
-}
-
 .chat {
+	min-height:	100px;
 	overflow:	hidden;
 	overflow-y:	scroll;
 	position:	relative;
