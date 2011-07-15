@@ -436,7 +436,7 @@ UI = function() {
     }
 
     Handler.prototype.Announcement = function(data) {
-       $('#announcement').html(data.announcement);
+       $('#announcement').html("<center>" + data.announcement + "</center>");
        mainLayout.resizeAll();
     }
 
