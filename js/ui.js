@@ -308,7 +308,6 @@ UI = function() {
                 plainElement.scrollTop = plainElement.scrollHeight;
 
                 Network.sendSendPM(player.id, message);
-
             }
         });
         pm_dialog.dialog("open");

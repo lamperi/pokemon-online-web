@@ -45,13 +45,14 @@ html, body {
 }
 
 #playerlist, #channellist, #battlelist {
-       list-style: none;
+	list-style: none;
+	overflow: hidden;
+	overflow-y: scroll;
 }
 
 #dialog-connect-servers-container {
 	max-height:300px;
 	overflow:scroll;
-
 }
 
 /* Layout */
