@@ -300,8 +300,13 @@ UI = function() {
             if (event.which == 13) {
                 var message = $(this).val();
                 $(this).val("");
-                var me = Data.player;
-                $(".chatdisplay", pm_dialog).append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
+                var me = player;
+                $chatdisplay = $(".chatdisplay", pm_dialog);
+                $chatdisplay.append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
+                /* Scrolls to the top */
+                var plainElement = $chatdisplay[0];
+                plainElement.scrollTop = plainElement.scrollHeight;
+
                 Network.sendSendPM(player.id, message);
 
             }
@@ -537,7 +542,7 @@ UI = function() {
         var playerId = data.playerId;
         var message = data.message;
         var player = Data.players[playerId];
-        var pm_dialog = PMDialog(player);;
+        var pm_dialog = PMDialog(player);
         var $chatdisplay = $(".chatdisplay", pm_dialog);
         $chatdisplay.append(fancyName(userColour(player), player.name) + htmlEscape(message) + "<br>");
         $chatdisplay.height(pm_dialog.height() - 53);
