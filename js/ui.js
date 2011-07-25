@@ -311,6 +311,8 @@ UI = function() {
                 var me = player;
                 $chatdisplay = $(".chatdisplay", pm_dialog);
                 $chatdisplay.append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
+                /* Resizes correctly */
+                pm_dialog.resize();
                 /* Scrolls to the top */
                 var plainElement = $chatdisplay[0];
                 plainElement.scrollTop = plainElement.scrollHeight;
