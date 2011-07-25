@@ -52,11 +52,11 @@ class PODecoder(object):
     def decode_color(self, cmd, i):
         color = Color()
         color.color_spec, i = self.decode_number(cmd, i, "!b")
-        color.alpha, i = self.decode_number(cmd, i, "!h")
-        color.red, i = self.decode_number(cmd, i, "!h")
-        color.green, i = self.decode_number(cmd, i, "!h")
-        color.blue, i = self.decode_number(cmd, i, "!h")
-        color.pad, i = self.decode_number(cmd, i, "!h")
+        color.alpha, i = self.decode_number(cmd, i, "!H")
+        color.red, i = self.decode_number(cmd, i, "!H")
+        color.green, i = self.decode_number(cmd, i, "!H")
+        color.blue, i = self.decode_number(cmd, i, "!H")
+        color.pad, i = self.decode_number(cmd, i, "!H")
         return (color, i)
 
     def decode_PokeUniqueId(self, cmd, i):
