@@ -46,6 +46,9 @@ html, body {
 
 #playerlist, #channellist, #battlelist {
 	list-style: none;
+}
+
+#tabs-1, #tabs-2, #tabs-3 {
 	overflow: hidden;
 	overflow-y: scroll;
 }
