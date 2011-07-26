@@ -295,7 +295,7 @@ UI = function() {
         }
     }
     var createPMDialog = function(player) {
-        pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
+        var pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
             height: 220,
             resize: function(ui, event) {
                 $(".chatdisplay", this).height($(this).height() - 53);
@@ -308,7 +308,7 @@ UI = function() {
             if (event.which == 13) {
                 var message = $(this).val();
                 $(this).val("");
-                var me = player;
+                var me = Data.player;
                 $chatdisplay = $(".chatdisplay", pm_dialog);
                 $chatdisplay.append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
                 /* Resizes correctly */
