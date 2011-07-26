@@ -171,12 +171,12 @@ UI = function() {
         });
 
         /* Open a new channel */
-        $("#joinchannel").keydown(function(ev)) {
+        $("#joinchannel").keydown(function(ev) {
             if (ev.which == 13) { // enter
                 ev.preventDefault();
                 Network.sendJoinChannel($(this).val());
             }
-        }
+        });
 
         // Widgets below channels tabs
         $("#chatmessage").keydown(function(ev) {
