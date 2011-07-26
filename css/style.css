@@ -46,11 +46,13 @@ html, body {
 
 #playerlist, #channellist, #battlelist {
 	list-style: none;
+	overflow: hidden;
+	overflow-y: scroll;
+	height:100%;
 }
 
 #tabs-1, #tabs-2, #tabs-3 {
-	overflow: hidden;
-	overflow-y: scroll;
+	height:100%;
 }
 
 #dialog-connect-servers-container {
