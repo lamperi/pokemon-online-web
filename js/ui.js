@@ -285,19 +285,6 @@ UI = function() {
                 $('.chatWrapper').data("layout").resizeAll();
             }
         });
-		tablistLayout = $('#tabs').layout({
-            name: "tablistLayout",
-            resizable: false,
-            triggerEventsOnLoad: false,
-            spacing_open: 0,
-            spacing_closed: 0,
-            north__paneSelector: "#tablistTitles",
-            center__paneSelector: "#tablist",
-            center__onresize: 
-            function() {
-                $('#tablist').data("layout").resizeAll();
-            }
-        });
     }
 
     var PMDialog = function(player) {
