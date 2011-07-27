@@ -304,6 +304,7 @@ UI = function() {
             triggerEventsOnLoad: false,
             spacing_open: 0,
             spacing_closed: 0,
+			north__paneSelector: "#playerlistUp",
             center__paneSelector: "#playerlist",
             center__onresize: 
             function() {
