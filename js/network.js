@@ -3,7 +3,8 @@ Network = {
         var ws;
 
         this.handler = handler;
-        ws = this.ws = new WebSocket("ws://localhost:8080/test");
+        var url = "ws://" + location.host + ":8080/test";
+        ws = this.ws = new WebSocket(url);
         ws.onmessage = function(evt) {
             try {
                 var data = JSON.parse(evt.data)
