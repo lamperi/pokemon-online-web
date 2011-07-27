@@ -403,8 +403,9 @@ UI = function() {
     }
     var userColour = function(user) {
         var color = user.color;
+		var colour;
         if (color.color_spec == 1) { // Rgb
-            colours = "#" + (user.color.red.toString(16)+'0').substring(0,2) + (user.color.green.toString(16)+'0').substring(0,2) + (user.color.blue.toString(16)+'0').substring(0,2);
+            colour = "#" + (color.red.toString(16)+'0').substring(0,2) + (color.green.toString(16)+'0').substring(0,2) + (color.blue.toString(16)+'0').substring(0,2);
         } else if (color.color_spec == 0) { // Invalid
             colour = Theme.getColour(user.id);
         } else { // Too lazy
