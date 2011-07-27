@@ -405,7 +405,7 @@ UI = function() {
         var color = user.color;
 		var colour;
         if (color.color_spec == 1) { // Rgb
-            colour = "#" + (color.red.toString(16)+'0').substring(0,2) + (color.green.toString(16)+'0').substring(0,2) + (color.blue.toString(16)+'0').substring(0,2);
+            colour = "#" + ('0'+(color.red >> 8).toString(16)).substr(-2) + ('0'+(color.green >> 8).toString(16)).substr(-2) + ('0'+(color.blue >> 8).toString(16)).substr(-2);
         } else if (color.color_spec == 0) { // Invalid
             colour = Theme.getColour(user.id);
         } else { // Too lazy
