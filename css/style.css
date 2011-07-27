@@ -47,8 +47,11 @@ html, body {
 #playerlist, #channellist, #battlelist {
 	list-style: none;
 	overflow: hidden;
-	overflow-y: scroll;
-	height:auto;
+	overflow-y: auto;
+	position: relative;
+	height: 100%;
+	padding: 0;
+	margin: 0;
 }
 
 #tabs-1, #tabs-2, #tabs-3 {
