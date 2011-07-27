@@ -308,7 +308,7 @@ UI = function() {
             center__paneSelector: "#channellist",
             center__onresize: 
             function() {
-                $('#tablist').data("layout").resizeAll();
+                $('#channellist').data("layout").resizeAll();
             }
         });
     }
