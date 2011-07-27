@@ -309,7 +309,7 @@ UI = function() {
             function() {
                 $('#playerlist').data("layout").resizeAll();
             }
-		};
+		});
     }
 
     var PMDialog = function(player) {
