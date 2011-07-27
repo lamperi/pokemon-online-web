@@ -36,11 +36,14 @@ WEB_SOCKET_DEBUG = true;
         </div>
         <div id="centerWrapper">
             <div id="tabs" class="ui-layout-content ui-widget content">
+				<table style="height:100%">
+				<tr><td>
                 <ul class="potabs">
                     <li><a href="#tabs-1">Players</a></li>
                     <li><a href="#tabs-2">Battles</a></li>
                     <li><a href="#tabs-3">Channel</a></li>
                 </ul>
+				</td></tr><tr><td>
                 <div id="tabs-1">
                     <ul id="playerlist"></ul>
                 </div>
@@ -51,6 +54,7 @@ WEB_SOCKET_DEBUG = true;
                     <ul id="channellist"></ul>
 					<input type="text" id="joinchannel" name="joinchannel">
                 </div>
+				</td></tr></table>
             </div>
             <div id="main" class="ui-layout-content ui-widget ui-corner-all content">
                 <div id="announcement" class="ui-widget ui-corner-all ui-widget-content"></div>
