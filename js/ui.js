@@ -298,6 +298,18 @@ UI = function() {
                 $('#tablist').data("layout").resizeAll();
             }
         });
+		playerlistLayout = $("#tabs-1").layout({
+			name: "playerlistLayout",
+			            resizable: false,
+            triggerEventsOnLoad: false,
+            spacing_open: 0,
+            spacing_closed: 0,
+            center__paneSelector: "#playerlist",
+            center__onresize: 
+            function() {
+                $('#playerlist').data("layout").resizeAll();
+            }
+		};
     }
 
     var PMDialog = function(player) {
