@@ -298,19 +298,6 @@ UI = function() {
                 $('#tablist').data("layout").resizeAll();
             }
         });
-		channellistLayout = $('#tabs-3').layout({
-            name: "channellistLayout",
-            resizable: false,
-            triggerEventsOnLoad: false,
-            spacing_open: 0,
-            spacing_closed: 0,
-            south__paneSelector: "#joinchannel",
-            center__paneSelector: "#channellist",
-            center__onresize: 
-            function() {
-                $('#channellist').data("layout").resizeAll();
-            }
-        });
     }
 
     var PMDialog = function(player) {
