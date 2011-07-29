@@ -312,7 +312,7 @@ UI = function() {
                 $chatdisplay = $(".chatdisplay", pm_dialog);
                 $chatdisplay.append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
                 /* Resizes correctly */
-                pm_dialog.resize();
+                pm_dialog.dialog("resize");
                 /* Scrolls to the top */
                 var plainElement = $chatdisplay[0];
                 plainElement.scrollTop = plainElement.scrollHeight;
@@ -386,7 +386,7 @@ UI = function() {
         var h = chat.height();
         chat.append(message + "<br>");
         chat.height(h);
-        $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
+        $(chat).each(function() {this.attr({ scrollTop: this.attr("scrollHeight") })});
     }
 
     var getColour = function(user, name) {
