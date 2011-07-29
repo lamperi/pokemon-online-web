@@ -171,12 +171,12 @@ UI = function() {
         });
 
         /* Open a new channel */
-        $("#joinchannel").keydown(function(ev)) {
+        $("#joinchannel").keydown(function(ev) {
             if (ev.which == 13) { // enter
                 ev.preventDefault();
                 Network.sendJoinChannel($(this).val());
             }
-        }
+        });
 
         // Widgets below channels tabs
         $("#chatmessage").keydown(function(ev) {
@@ -285,6 +285,19 @@ UI = function() {
                 $('.chatWrapper').data("layout").resizeAll();
             }
         });
+		tablistLayout = $('#tabs').layout({
+            name: "tablistLayout",
+            resizable: false,
+            triggerEventsOnLoad: false,
+            spacing_open: 0,
+            spacing_closed: 0,
+            north__paneSelector: "#tablistTitles",
+            center__paneSelector: "#tablist",
+            center__onresize: 
+            function() {
+                $('#tablist').data("layout").resizeAll();
+            }
+        });
     }
 
     var PMDialog = function(player) {
@@ -295,7 +308,7 @@ UI = function() {
         }
     }
     var createPMDialog = function(player) {
-        pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
+        var pm_dialog = $("<div title='" + player.name + "'><div class='ui-widget-content chatdisplay' style='min-height: 120px; overflow: auto;'></div><input type='text'></div>").dialog({
             height: 220,
             resize: function(ui, event) {
                 $(".chatdisplay", this).height($(this).height() - 53);
@@ -308,7 +321,7 @@ UI = function() {
             if (event.which == 13) {
                 var message = $(this).val();
                 $(this).val("");
-                var me = player;
+                var me = Data.player;
                 $chatdisplay = $(".chatdisplay", pm_dialog);
                 $chatdisplay.append(fancyName(userColour(me), me.name) + htmlEscape(message) + "<br>");
                 /* Resizes correctly */
@@ -403,9 +416,10 @@ UI = function() {
     }
     var userColour = function(user) {
         var color = user.color;
-        if (color.spec == 1) { // Rgb
-            colours = "#" + user.color.red.toString(16) + user.color.green.toString(16) + user.color.blue.toString(16);
-        } else if (color.spec == 0) { // Invalid
+		var colour;
+        if (color.color_spec == 1) { // Rgb
+            colour = "#" + ('0'+(color.red >> 8).toString(16)).substr(-2) + ('0'+(color.green >> 8).toString(16)).substr(-2) + ('0'+(color.blue >> 8).toString(16)).substr(-2);
+        } else if (color.color_spec == 0) { // Invalid
             colour = Theme.getColour(user.id);
         } else { // Too lazy
             colour = Theme.getColour(user.id);

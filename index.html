@@ -36,21 +36,23 @@ WEB_SOCKET_DEBUG = true;
         </div>
         <div id="centerWrapper">
             <div id="tabs" class="ui-layout-content ui-widget content">
-                <ul class="potabs">
+                <ul class="potabs" id="tablistTitles">
                     <li><a href="#tabs-1">Players</a></li>
                     <li><a href="#tabs-2">Battles</a></li>
                     <li><a href="#tabs-3">Channel</a></li>
                 </ul>
-                <div id="tabs-1">
-                    <ul id="playerlist"></ul>
-                    <input type="text" id="joinchannel" name="joinchannel">
-                </div>
-                <div id="tabs-2">
-                    <ul id="battlelist"></ul>
-                </div>
-                <div id="tabs-3">
-                    <ul id="channellist"></ul>
-                </div>
+				<div id="tablist" class="ui-layout-content">
+					<div id="tabs-1" class="ui-layout-content">
+						<ul id="playerlist"></ul>
+					</div>
+					<div id="tabs-2" class="ui-layout-content">
+						<ul id="battlelist"></ul>
+					</div>
+					<div id="tabs-3" class="ui-layout-content">
+						<ul id="channellist"></ul>
+						<input type="text" id="joinchannel" name="joinchannel" />
+					</div>
+				</div>
             </div>
             <div id="main" class="ui-layout-content ui-widget ui-corner-all content">
                 <div id="announcement" class="ui-widget ui-corner-all ui-widget-content"></div>
