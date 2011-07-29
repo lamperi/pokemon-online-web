@@ -320,6 +320,9 @@ UI = function() {
         $("input", pm_dialog).keydown(function(event) {
             if (event.which == 13) {
                 var message = $(this).val();
+                if (message.length == 0) {
+                    return;
+                }
                 $(this).val("");
                 var me = Data.player;
                 $chatdisplay = $(".chatdisplay", pm_dialog);
