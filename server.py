@@ -91,7 +91,7 @@ class Receiver(POProtocol):
     def onChallengeStuff(self, challengeInfo):
         info = { 'dsc': challengeInfo.dsc, 'opp': challengeInfo.opp,
                           'clauses': challengeInfo.clauses, 'mode': challengeInfo.mode} 
-        self.client.sendObject({'type': 'SendTeam', 'challengeInfo': info})
+        self.client.sendObject({'type': 'ChallengeStuff', 'challengeInfo': info})
 
     def onEngageBattle(self, battleid, player1, player2, battleConf, teamBattle):
         if player1 == 0:
