@@ -539,7 +539,7 @@ UI = function() {
     Handler.prototype.Logout = function(data) {
         var player = Data.players[data.playerId];
         removePlayer(player);
-        print(data.chanId, player.name + " quit.");
+        printAll(player.name + " quit.");
         delete Data.players[data.playerId];
     }
 
