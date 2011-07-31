@@ -524,6 +524,12 @@ UI = function() {
     Handler.prototype.LeaveChannel = function(data) {
         var player = Data.players[data.playerId];
         var channel = Data.channels[data.chanId];
+
+        /* PO sends logout before leavechannel, should be fixed */
+        if (typeof(player) == "undefined") {
+            return;
+        }
+
         print(data.chanId, player.name + " left " + channel.name + ".");
         var i = channel.players.indexOf(player.id);
         if (i != -1)
