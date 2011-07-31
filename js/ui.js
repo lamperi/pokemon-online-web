@@ -551,7 +551,7 @@ UI = function() {
         printAll(data.message);
     }
 
-    Handler.prototype.ChannelHtml = function(data) {
+    Handler.prototype.HtmlChannel = function(data) {
         print(data.chanId, message);
     }
 
