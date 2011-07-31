@@ -402,7 +402,7 @@ UI = function() {
         var h = chat.height();
         chat.append(message + "<br>");
         chat.height(h);
-        $(chat).each(function() {this.attr({ scrollTop: this.attr("scrollHeight") })});
+        $(chat).each(function() {$(this).attr({ scrollTop: $(this).attr("scrollHeight") })});
     }
 
     var getColour = function(user, name) {
