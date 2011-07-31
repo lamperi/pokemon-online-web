@@ -61,6 +61,41 @@ Logic = function() {
         this.id = id;
         this.name = name;
         this.players = [];
+        this.battles = {};
+    }
+
+    Channel.prototype.hasPlayer = function (id) {
+        return this.players.indexOf(id) != -1;
+    }
+
+    Channel.prototype.addBattle = function(battleId, p1, p2) {
+        if (!this.hasPlayer(p1) && !this.hasPlayer(p2)) {
+            return false;
+        }
+        this.battles[battleId] = [p1, p2];
+
+        return true;
+    }
+
+    Channel.prototype.removeBattle = function(battleId) {
+        if (!battleId in this.battles) {
+            return false;
+        }
+        delete this.battles[battleId];
+        return true;
+    }
+
+    Channel.prototype.removePlayer = function(id) {
+        var i = this.players.indexOf(id);
+        if (i != -1)
+            this.players.splice(i,1);
+
+            for (var i in this.battles) {
+                if (!this.hasPlayer(this.battles[i][0]) && !this.hasPlayer(this.battles[i][1])) {
+                    this.removeBattle(i);
+                }
+            }
+        }
     }
 
     function translate() {
@@ -383,6 +418,14 @@ UI = function() {
         removePlayerFromList(player);
     }
 
+    var removeBattle = function(battleId) {
+        for (var i in Data.channels) {
+            var channel = Data.channels[i];
+            channel.removeBattle(battleId);
+        }
+        delete battles[battleId];
+    }
+
     var addChannelToList = function(c) {
         var item = $("<li id='channel_" + c.id + "'><span class='channelName' style='cursor: pointer;'>" + c.name + "</span></li>");
         item.click(function(e) {
@@ -407,6 +450,7 @@ UI = function() {
         chat.height(h);
         $(chat).attr({ scrollTop: $(chat).attr("scrollHeight") });
     }
+
     var printAll = function(message) {
         var chat = $("#channels div.chat");
         var h = chat.height();
@@ -518,6 +562,18 @@ UI = function() {
         Data.players[player.id] = player;
     }
 
+    Handler.prototype.EngageBattle = function(data) {
+        Data.battles[data.battleId] = [data.playerId1, data.playerId2];
+        for (var i in Data.channels) {
+            var channel = Data.channels[i];
+            channel.addBattle(data.battleId,data.playerId1, data.playerId2);
+        }
+    }
+
+    Handler.prototype.BattleFinished = function(data) {
+        removeBattle(data.battleId);
+    }
+
     Handler.prototype.AddChannel = function(data) {
         var channel = new Logic.Channel(data.chanId, data.chanName);
         Data.channels[channel.id] = channel;
@@ -553,9 +609,8 @@ UI = function() {
         }
 
         //print(data.chanId, player.name + " left " + channel.name + ".");
-        var i = channel.players.indexOf(player.id);
-        if (i != -1)
-            channel.players.splice(i,1);
+        channel.removePlayer(player.id);
+
         if (openChannelId() === data.chanId) {
             removePlayerFromList(player);
         }
