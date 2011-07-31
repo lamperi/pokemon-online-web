@@ -139,7 +139,7 @@ UI = function() {
                     initPanes: false,
                     spacing_open: 0,
                     spacing_closed: 0,
-                    resizeWithWindow: false,
+                    resizeWithWindow: true,
                 });
                 mainLayout.resizeAll();
                 myLayout.resizeAll();
