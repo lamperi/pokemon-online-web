@@ -552,7 +552,7 @@ UI = function() {
     }
 
     Handler.prototype.HtmlChannel = function(data) {
-        print(data.chanId, message);
+        print(data.chanId, data.message);
     }
 
     Handler.prototype.SendMessage = function(data) {
