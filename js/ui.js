@@ -87,7 +87,7 @@ Logic = function() {
 
     Channel.prototype.removePlayer = function(id) {
         var i = this.players.indexOf(id);
-        if (i != -1)
+        if (i != -1) {
             this.players.splice(i,1);
 
             for (var i in this.battles) {
