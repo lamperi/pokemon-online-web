@@ -140,6 +140,9 @@ class Receiver(POProtocol):
 
     def onHtmlMessage(self, message):
         self.client.sendObject({'type': 'HtmlMessage', 'message': message})
+
+    def onHtmlChannel(self, chanid, message):
+        self.client.sendObject({'type': 'HtmlChannel', 'message': message, 'chanId':chanid})
         
     # Other Events
 

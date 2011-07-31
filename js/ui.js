@@ -551,6 +551,10 @@ UI = function() {
         printAll(data.message);
     }
 
+    Handler.prototype.ChannelHtml = function(data) {
+        print(data.chanId, message);
+    }
+
     Handler.prototype.SendMessage = function(data) {
         printAll(fancyLine(data.user, data.message));
     }
