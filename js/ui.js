@@ -423,7 +423,7 @@ UI = function() {
             var channel = Data.channels[i];
             channel.removeBattle(battleId);
         }
-        delete battles[battleId];
+        delete Data.battles[battleId];
     }
 
     var addChannelToList = function(c) {
