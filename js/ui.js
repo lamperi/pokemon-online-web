@@ -344,8 +344,13 @@ UI = function() {
     var getPlayerFromList = function(id) {
         return $('#player_' + id);
     }
+
     var getPlayerFromListByName = function(name) {
         return $('#playerlist span[class=playerName]').filter(function(i) { return $(this).text() == name; }).parent();
+    }
+
+    var getChannelFromList = function(id) {
+        return $('#channel_' + id);
     }
 
     var updatePlayerInList = function(player) {
@@ -388,6 +393,11 @@ UI = function() {
         }).eq(0);
         if (target.length > 0) target.before(item);
         else $('#channellist').append(item);
+    }
+
+    var removeChannelFromList = function(c) {
+        var li = getChannelFromList(c.id);
+        li.remove();
     }
 
     var print = function(channelId, message) {
@@ -508,6 +518,20 @@ UI = function() {
         Data.players[player.id] = player;
     }
 
+    Handler.prototype.AddChannel = function(data) {
+        var channel = new Logic.Channel(data.chanId, data.chanName);
+        Data.channels[channel.id] = channel;
+        addChannelToList(channel);
+    }
+
+    Handler.prototype.RemoveChannel = function(data) {
+        var channel = Data.channels[data.chanId];
+        var i = Data.channels.indexOf(channel.id);
+        if (i != -1)
+            Data.channels.splice(i,1);
+        removeChannelFromList(channel);
+    }
+
     Handler.prototype.JoinChannel = function(data) {
         var player = Data.players[data.playerId];
         var channel = Data.channels[data.chanId];
@@ -518,7 +542,7 @@ UI = function() {
         if (data.playerId == Data.player.id) {
             $('#channel_' + channel.id + ' span').addClass('ui-state-active');
         }
-        print(data.chanId, player.name + " joined " + channel.name + ".");
+        //print(data.chanId, player.name + " joined " + channel.name + ".");
     }
 
     Handler.prototype.LeaveChannel = function(data) {
@@ -530,7 +554,7 @@ UI = function() {
             return;
         }
 
-        print(data.chanId, player.name + " left " + channel.name + ".");
+        //print(data.chanId, player.name + " left " + channel.name + ".");
         var i = channel.players.indexOf(player.id);
         if (i != -1)
             channel.players.splice(i,1);
