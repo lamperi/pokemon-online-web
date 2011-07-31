@@ -526,9 +526,7 @@ UI = function() {
 
     Handler.prototype.RemoveChannel = function(data) {
         var channel = Data.channels[data.chanId];
-        var i = Data.channels.indexOf(channel.id);
-        if (i != -1)
-            Data.channels.splice(i,1);
+        delete Data.channels[data.chanId];
         removeChannelFromList(channel);
     }
 
