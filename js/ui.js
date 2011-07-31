@@ -435,7 +435,7 @@ UI = function() {
     }
 
     var htmlEscape = function(html) {
-        return html.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        return html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     var fancyLine = function(user, message) {
