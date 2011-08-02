@@ -465,7 +465,7 @@ class WebSocketFrameDecoder(object):
                 self._currentFrameLength = 0
                 frame = "".join(self._data) + data[:endIndex]
                 self._data[:] = []
-                if len(data) == 0:
+                if len(frame) == 0:
                     break;
                 if frame[0] != "\x00":
                     self.request.transport.loseConnection()
