@@ -12,7 +12,7 @@ from struct import pack, unpack
 from json import loads, dumps
 from hashlib import md5
 
-from poprotocol import POProtocol, RegistryProtocol
+from poprotocol import POProtocol, RegistryProtocol, ChallengeInfo
 from teamloader import loadTeam
 
 class Registry(RegistryProtocol):
@@ -43,6 +43,17 @@ class Receiver(POProtocol):
                    'tier': playerInfo.tier, 'color': playerInfo.color.__dict__,
                    'gen': playerInfo.gen, 'pokemon': [uid.__dict__ for uid in playerInfo.pokemon]}
         return player
+
+    def serializeTeamBattle(self, teamBattle):
+        team = {'m_pokemons': []}
+        for poke in teamBattle.m_pokemons:
+            pd = poke.__dict__
+            pd['num'] = pd['num'].__dict__ # unique id
+            for i in range(4):
+                pd['move'][i] = pd['move'][i].__dict__ # battlemove
+            team['m_pokemons'].append(pd)
+
+        return team
 
     # PO Events
 
@@ -97,7 +108,7 @@ class Receiver(POProtocol):
         if player1 == 0:
             self.client.sendObject({'type': 'EngageBattle', 'battleId': battleid, 
                                     'playerId1': player1, 'playerId2': player2,
-                                    'battleConf': None, 'teamBattle': None})
+                                    'battleConf': battleConf.__dict__, 'teamBattle': self.serializeTeamBattle(teamBattle)})
 
         else:
             self.client.sendObject({'type': 'EngageBattle', 'battleId': battleid, 
@@ -153,6 +164,7 @@ class Receiver(POProtocol):
 
 class POhandler(WebSocketHandler):
     def __init__(self, transport):
+        print 'Creating handler'
         WebSocketHandler.__init__(self, transport)
         self.proxy = None
         self.pending = []
@@ -166,7 +178,6 @@ class POhandler(WebSocketHandler):
         factory.protocol = Registry
         point = TCP4ClientEndpoint(reactor, "pokemon-online.dynalias.net", 5081)
         d = point.connect(factory)
-
 
         def gotRegistry(registry):
             def gotServerList(servers):
@@ -195,17 +206,17 @@ class POhandler(WebSocketHandler):
 
         try:
             method = "on{0}".format(json["type"])
-            print method
+            #print method
             if hasattr(self, method):
                 getattr(self, method)(json)
             else:
-                print "Unknown event"
+                print "Unknown event:", method
         except Exception as e:
             print "Error handling in JSON event: {0}".format(json.get("type"), "UnknownEvent")
             print "{0}: {1}".format(e.__class__.__name__, e) 
             
     def sendObject(self, o):
-        print dumps(o)
+        #print dumps(o)
         self.transport.write(dumps(o))
 
     def createProxyConnection(self, ip, port):
@@ -235,7 +246,6 @@ class POhandler(WebSocketHandler):
 
     # Handing JSON Events from Websocket client
     def onLogin(self, json):
-        print "Tries to login!"
         info = loadTeam()
         info.team.nick = json['name']
         self.proxy.login(info)
@@ -262,7 +272,17 @@ class POhandler(WebSocketHandler):
     def onSendPM(self, json):
         self.proxy.sendPM(json['playerId'], json['message'])
 
+    def onChallengeStuff(self, json):
+        self.proxy.challengeStuff(ChallengeInfo(json['info']['type'], json['info']['id'], json['info'].get('clauses', 0), json['info'].get('mode', 0)));
 
+    def onBattleCommand(self, json):
+        bc = BattleChoice()
+        bc.type = BattleChoice.CancelType;
+        bc.spot = json['spot']
+        self.proxy.battleCommand(json['battleid'], bc)
+
+    def onBattleFinished(self, json):
+        self.proxy.battleFinished(json['battleid'], json['result'])
 
 class FlashSocketPolicy(Protocol):
     """ A simple Flash socket policy server.

@@ -264,9 +264,22 @@ UI = function() {
         });
         $("#dialog-connect-ok").click(function() {
             $("#dialog-connect").dialog("close");
+            
             Network.sendConnect($("#dialog-connect-input-ip").val(), $("#dialog-connect-input-port").val());
             Network.sendLogin($("#dialog-connect-input-name").val());
+
+            if (window.localStorage) {
+                localStorage.setItem("hostname", $("#dialog-connect-input-ip").val());
+                localStorage.setItem("port", $("#dialog-connect-input-port").val());
+                localStorage.setItem("name", $("#dialog-connect-input-name").val());
+            }
         });
+
+        if (window.localStorage) {
+            $("#dialog-connect-input-ip").val(localStorage.getItem("hostname") || "valssi.fixme.fi");
+            $("#dialog-connect-input-port").val(localStorage.getItem("port") || "5080");
+            $("#dialog-connect-input-name").val(localStorage.getItem("name") || "Guest");
+        }
 
         // table sorter
         $.tablesorter.addParser({
@@ -279,6 +292,7 @@ UI = function() {
 
         });
 
+        // Layouts
         pageLayout = $('body').layout({ 
             name: "pageLayout",
             center__paneSelector: "#centerWrapper",
@@ -374,6 +388,83 @@ UI = function() {
         pm_dialog.dialog("open");
         Data.PMs[player.id] = pm_dialog;
         return pm_dialog;
+    }
+
+    var Clauses =
+    {
+        SleepClause: 1,
+        FreezeClause: 2,
+        DisallowSpectator: 4,
+        ItemClause: 8,
+        ChallengeCup: 16,
+        NoTimeOut: 32,
+        SpeciesClause: 64,
+        RearrangeTeams: 128,
+        SelfKO: 256
+    };
+    
+    var ChallengeDesc = 
+    {
+        Sent: 0,
+        Accepted: 1,
+        Cancelled: 2,
+        Busy: 3,
+        Refused: 4,
+        InvalidTeam: 5,
+        InvalidGen: 6,
+    };
+
+    var Mode =
+    {
+        Singles: 1,
+        Doubles: 2,
+        Triples: 3,
+        Rotation: 4,
+    };
+    
+
+    var createChallengeDialog = function(opponent, clauses, mode) {
+        var modeText = ["Singles", "Doubles", "Triples", "Rotation"][mode];
+        var cc=[];
+        var sent = false;
+        for (var c in Clauses) {
+                cc.push("<li><input type='checkbox' disabled='disabled' " + (Clauses[c] & clauses > 0 ? "checked='checked'" : "") + " value='" + c + "'>" + c + "</li>");
+        }
+        var clauseHtml = cc.join(""); 
+        /*var*/ challenge_dialog = $("<div title='" + opponent.name + " challenged you!'><div class='challengeWindow'>Mode: " + modeText + "Clauses: <ul>" + clauseHtml + "</ul><input name='accept' type='button' value='Accept'><input name='deny' type='button' value='Deny'></div></div>").dialog({
+            close: function(ui, event) {
+                if (!sent)
+                    Network.sendChallengeStuff({id: opponent.id, type: ChallengeDesc.Refused});
+            },
+        });
+        $('input[name=accept]', challenge_dialog).click(function(event) {
+            sent = true;
+            Network.sendChallengeStuff({id: opponent.id, type: ChallengeDesc.Accepted});
+            challenge_dialog.dialog("close");
+        });
+        $('input[name=deny]', challenge_dialog).click(function(event) {
+            sent = true;
+            Network.sendChallengeStuff({id: opponent.id, type: ChallengeDesc.Refused});
+            challenge_dialog.dialog("close");
+        });
+        challenge_dialog.dialog("open");
+        return challenge_dialog;
+    }
+
+    var createBattleDialog = function(battleid, opponent, conf, team) {
+        var slot = conf.id[0] == Data.player.id ? 0 : 1;
+        var battle_dialog = $("<div title='Battle against " + opponent.name + "'><input type='button' name='forfeit' value='Forfeit'></div>").dialog({
+            close: function(ui, event) {
+                Network.sendBattleFinished(battleid, 0); // forfeit
+                delete Data.battles[battleid];
+            }
+        });
+        $('input[name=forfeit]', battle_dialog).click(function(event) {
+            battle_dialog.dialog("close");
+        });
+        battle_dialog.dialog("open");
+        Data.battles[battleid] = {dialog: battle_dialog, opponent: opponent, conf: conf, team: team};
+        return battle_dialog;
     }
 
     var getPlayerFromList = function(id) {
@@ -706,9 +797,22 @@ UI = function() {
         Network.disconnect();
     }
 
+    Handler.prototype.ChallengeStuff = function(data) {
+        var opponent = Data.players[data.challengeInfo.opp];
+        var dialog = createChallengeDialog(opponent, data.challengeInfo.clauses, data.challengeInfo.mode);    
+    }
+
+    Handler.prototype.EngageBattle = function(data) {
+        if (data.playerId1 == 0) { // my battle!
+            var opponent = Data.players[data.playerId2];
+            var dialog = createBattleDialog(data.battleId, opponent, data.battleConf, data.teamBattle);  
+        }
+    }
+
     return {
         init: init,
         Handler: Handler,
+        printAll: printAll,
     }
 }();
 

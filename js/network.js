@@ -3,7 +3,7 @@ Network = {
         var ws;
 
         this.handler = handler;
-        var url = "ws://" + location.host + ":8080/test";
+        var url = "ws://" + location.host + "/test";
         ws = this.ws = new WebSocket(url);
         ws.onmessage = function(evt) {
             try {
@@ -71,8 +71,20 @@ Network = {
     },
 
     sendSendPM: function(playerId, message) {
-        this.sendJSON({type: 'SendPM', playerId: playerId, message: message})
-    }
+        this.sendJSON({type: 'SendPM', playerId: playerId, message: message});
+    },
+
+    sendChallengeStuff: function(info) {
+        this.sendJSON({type: 'ChallengeStuff', info: info});
+    },
+
+    sendBattleCommand: function(id, choice) {
+        this.sendJSON({type: 'BattleCommand', id: id, choice: choice})
+    },
+
+    sendBattleFinished: function(id, result) {
+        this.sendJSON({type: 'BattleFinished', battleid: id, result: result})  
+    },
 }
 
 $(document).ready(function() {

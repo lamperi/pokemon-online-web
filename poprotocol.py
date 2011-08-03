@@ -1,7 +1,7 @@
 # poprotocol.py
 # Pokemon Online protocol implemented in Twisted protocol
 #
-# (c) Toni Fadjukoff
+# (c) Toni Fadjukoff 2011
 # Licensed under GPL 3.
 # See LICENSE.txt for details
 
@@ -141,7 +141,6 @@ class PODecoder(object):
         tb = TeamBattle()
         for k in xrange(6):
             tb.m_pokemons[k], i = self.decode_PokeBattle(cmd, i)
-            print "got ", tb.m_pokemons[k]
         return (tb, i)
 
     def decode_PokeBattle(self, cmd, i):
@@ -247,8 +246,22 @@ class PODecoder(object):
         return struct.pack("!bhhhhh", color.color_spec, color.alpha, color.red, color.green, color.blue, color.pad)
 
     def encode_ChallengeInfo(self, info):
+        print "info"
+        print info.dsc
+        print info.opp
+        print info.clauses
+        print info.mode
         return struct.pack("!biIB", info.dsc, info.opp, info.clauses, info.mode)
- 
+
+    def encode_BattleChoice(self, choice):
+        ret = struct.pack("!BB", choice.slot, choice.type)
+        if command.type == BattleChoice.SwitchType:
+            ret += struct.pack("!b", choice.pokeSlot);
+        elif command.type == BattleChoice.AttackType:
+            ret += struct.pack("!bb", choice.attackSlot, attackTarget)
+        elif command.type == BattleChoice.RearrangeType:
+            ret += struct.pack("!bbbbbb", *choice.pokeIndices)
+        return ret
 
 class RegistryProtocol(Int16StringReceiver, PODecoder):
 
@@ -333,8 +346,16 @@ class POProtocol(Int16StringReceiver, PODecoder):
         tosend = struct.pack('B', NetworkEvents['SendTeam']) + self.encode_TrainerTeam(trainerteam)
         self.send(tosend)
 
-    def sendChallengeStuff(self, challengeinfo):
+    def challengeStuff(self, challengeinfo):
         tosend = struct.pack('B', NetworkEvents['ChallengeStuff']) + self.encode_ChallengeInfo(challengeinfo)
+        self.send(tosend)
+
+    def battleCommand(self, battleid, slot, battlecommand):
+        tosend = struct.pack('Bi', NetworkEvents['BattleCommand']) + slot + self.encode_BattleChoice(battlecommand)
+        self.send(tosend)
+
+    def battleFinished(self, battleid, result):
+        tosend = struct.pack('!Bii', NetworkEvents['BattleFinished'], battleid, result)
         self.send(tosend)
 
     def sendPM(self, playerid, message):
@@ -590,7 +611,7 @@ class POProtocol(Int16StringReceiver, PODecoder):
         battleid, i = self.decode_number(cmd, 0, "!i")
         b, i = self.decode_bytes(cmd, i)
         self.handleBattleCommand(battleid, b)
-        self.onBattleMessage(self, battleid, b)
+        self.onBattleMessage(battleid, b)
 
     def onBattleMessage(self, battleid, bytes):
         """
@@ -1013,11 +1034,11 @@ class PokeUniqueId(object):
         return "<POProtocol.PokeUniquiId (pokenum=%d, subnum=%d)>" % (self.pokenum, self.subnum)
 
 class ChallengeInfo(object):
-    def __init__(self):
-        self.dsc = 0
-        self.opp = 0
-        self.clauses = 0
-        self.mode = 0
+    def __init__(self, opp = 0, dsc = 0, clauses = 0, mode = 0):
+        self.dsc = opp
+        self.opp = dsc
+        self.clauses = clauses
+        self.mode = mode
     def __repr__(self):
         return "<POProtocol.ChallengeInfo (dsc=%d, opp=%d, clauses=%d, mode=%d)>" % (self.dsc, self.opp, self.clauses, self.mode)
 
@@ -1028,7 +1049,6 @@ class BattleConfiguration(object):
         self.id = [0, 0]
         self.clauses = 0
     def __repr__(self):
-
         return "<POProtocol.BattleConfiguration (gen=%d, mode=%d, id=%r, clauses=%d)>" % (self.gen, self.mode, self.id, self.clauses)
 
 class TeamBattle(object):
@@ -1054,6 +1074,14 @@ class PokeBattle(object):
         self.dvs = [0]*6
     def __repr__(self):
         return "<POProtocol.PokeBattle (num=%r, nick=%r)>" % (self.num, self.nick)
+
+class BattleChoice(object):
+    def __init__(self):
+        self.slot = 0
+        self.type = 0
+
+    def __repr__(self):
+        return "<POProtocol.BattleChoice (type=%r, slot=%r)>" % (self.type, self.slot)
 
 class BattleMove(object):
     def __init__(self):

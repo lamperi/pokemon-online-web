@@ -69,6 +69,7 @@ Theme = function() {
                 css.push(rule);
             }
         }
+        css.push(".challengeWindow { background-image: url(" + imagemap["challengebg"] + ") !importan !importantt; }");
         css.push("</style>");
         $(css.join("\n")).appendTo("head");
     }
@@ -80,6 +81,7 @@ Theme = function() {
     return {
         init: init,
         getColour: getColour,
+        imagemap: imagemap, // debugging
     }
 }();
 
