@@ -1,3 +1,10 @@
+# server.py
+# Pokemon Online Client / HTTP Server
+# Acts as a middleman between webclient and PO servers
+#
+# (c) Toni Fadjukoff 2011
+# Licensed under GPL 3.
+# See LICENSE.txt for details
 from twisted.internet.protocol import Protocol, Factory
 from twisted.web import resource
 from twisted.web.static import File

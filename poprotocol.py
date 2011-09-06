@@ -424,7 +424,228 @@ class POProtocol(Int16StringReceiver, PODecoder):
         pass
 
     def on_Battle_SendOut(self, bid, spot, bytes):
-        silent, i = self.extract_number(bytes, 0, "B")
+        silent, i = self.decode_number(bytes, 0, "B")
+        prevIndex, i = self.decode_number(bytes, i, "B")
+        poke, i = self.decode_ShallowBattlePoke(bytes, i)
+        self.onBattleSendOut(bid, spot, silent > 0, prevIndex, poke)
+
+    def onBattleSendOut(self, bid, spot, silent, prevIndex, poke):
+        """
+        SendOut - called when a pokemon on send on the field
+        bid : int - battle id
+        spot : int - spot in the field
+        silent : bool - should this be announced?
+        prevIndex : uint8 - which was the previous index?
+        """
+
+    def on_Battle_SendBack(self, bid, spot, bytes):
+        self.onBattleSendBack(bid, spot)
+
+    def onBattleSendBack(self, bid, spot):
+        """
+        SendBack - called when a pokemon is called back
+        bid : int - battle id
+        spot : int - spot in the field
+        """
+    def on_Battle_OfferChoice(self, bid, spot, bytes):
+        pass # TODO interactive stuff
+
+    def on_Battle_UseAttack(self, bid, spot, bytes):
+        attack, i = self.decode_number(bytes, 0, "!H")
+        self.onBattleUseAttack(bid, spot, attack)
+
+    def onBattleUseAttack(self, bid, spot, attack):
+        """
+        UseAttack - called when a pokemon uses a attack
+        bid : int - battle id
+        spot : int - spot in the field
+        attack : uint16 - the number of the used attack
+        """
+
+    def on_Battle_BeginTurn(self, bid, spot, bytes):
+        turn, i = self.decode_number(bytes, 0, "!H")
+        self.onBattleUseAttack(bid, spot, turn)
+
+    def onBattleBeginTurn(self, bid, spot, turn):
+        """
+        BeginTurn - called when a new turn starts
+        bid : int - battle id
+        spot : int - spot in the field
+        turn : uint16 - the turn which starts
+        """
+    def on_Battle_ChangePP(self, bid, spot, bytes):
+        pass # TODO interactive stuff
+
+    def on_Battle_ChangeHp(self, bid, spot, bytes):
+        hp, i = self.decode_number(bytes, 0, "!H") 
+        self.onBattleChangeHp(bid, spot, hp)
+
+    def onBattleChangeHp(self, bid, spot, hp):
+        """
+        ChangeHp - called when HP value changes
+        bid : int - battle id
+        spot : int - spot in the field
+        hp : uint16 - hp value for us, percentage for foe
+        """
+
+    def on_Battle_Ko(self, bid, spot, bytes):
+        self.onBattleKo(bid, spot)
+
+    def onBattleKo(self, bid, spot):
+        """
+        Ko - called when someone is KO'd
+        bid : int - battle id
+        spot : int - spot in the field
+        """
+
+    def on_Battle_Effective(self, bid, spot, bytes):
+        eff, i = self.decode_number(bytes, 0, "B")
+        self.onBattleEffective(bid, spot, eff)
+
+    def onBattleEffective(self, bid, spot, eff):
+        """
+        Effective - called when a move is not very or super effective
+        bid : int - battle id
+        spot : int - spot in the field
+        eff : byte - the effectiveness of the move
+        """
+
+    def on_Battle_Miss(self, bid, spot, bytes):
+        self.onBattleMiss(bid, spot)
+
+    def onBattleMiss(self, bid, spot):
+        """
+        Miss - called when a miss occurs
+        bid : int - battle id
+        spot : int - spot in the field
+        """
+
+    def on_Battle_CriticalHit(self, bid, spot, bytes):
+        self.onBattleCriticalHit(bid, spot)
+
+    def onBattleCriticalHit(self, bid, spot):
+        """
+        CriticalHit - called when a critical hit occurs
+        bid : int - battle id
+        spot : int - spot in the field
+        """
+
+    def on_Battle_Hit(self, bid, spot, bytes):
+        self.onBattleHit(bid, spot)
+
+    def onBattleHit(self, bid, spot):
+        """
+        Hit - called when a hit occurs
+        bid : int - battle id 
+        spot : int - spot in the field
+        """
+
+    def on_Battle_StatChange(self, bid, spot, bytes):
+        stat, i = self.decode_number(bytes, 0, "b")
+        boost, i = self.decode_number(bytes, i, "b")
+        self.onBattleStatChange(bid, spot, stat, boost)
+
+    def onBattleStatChange(self, bid, spot, stat, boost):
+        """
+        StatChange - a stat changes
+        bid : int - battle id
+        spot : int - spot in the field
+        stat : int8 - the stat affected
+        boost : int8 - the boost in the stat
+        """
+
+    def on_Battle_StatusChange(self, bid, spot, bytes):
+        status, i = self.decode_number(bytes, 0, "b")
+        multiturn, i = self.decode_number(bytes, i, "B")
+        self.onBattleStatusChange(bid, spot, status, multiturn > 0) 
+
+    def onBattleStatusChange(self, bid, spot, status, multiturn):
+        """
+        StatusChange - status changes
+        bid : int - battle id
+        spot : int - spot in the field
+        status : int8 - status number
+        multiturn : bool - not used
+        """
+
+    def on_Battle_StatusMessage(self, bid, spot, bytes):
+        statusmessage, i = self.decode_number(bytes, 0, "b")
+        self.onBattleStatusMessage(bid, spot, status)
+
+    def onBattleStatusMessage(self, bid, spot, statusmessage):
+        """
+        StatusMessage - a new status related message
+        statusmessage : int8 - the id of the status message
+        """
+
+    def on_Battle_Failed(self, bid, spot, bytes):
+        self.onBattleFaileD(bid, spot)
+
+    def onBattleFailed(self, bid, spot):
+        """
+        Failed - a move failed
+        """
+
+    def on_Battle_BattleChat(self, bid, spot, bytes):
+        message, i = self.decode_string(bytes, 0)
+        self.onBattleBattleChat(bid, spot, message)
+
+    def onBattleBattleChat(self, bid, spot, message):
+        """
+        BattleChat - a player chats
+        message : string - the message including player name
+        """
+
+    def on_Battle_MoveMessage(self, bid, spot, bytes):
+        move, i = self.decode_number(bytes, 0, "!H")
+        part, i = self.decode_number(bytes, i, "B")
+        type, i = self.decode_number(bytes, i, "b")
+        foe, i = self.decode_number(bytes, i, "b")
+        other, i = self.decode_number(bytes, i, "!h")
+        q, i = self.decode_string(bytes, i)
+        self.onBattleMoveMessage(bid, spot, move, part, type, foe, other, q)
+
+    def onBattleMoveMessage(self, bid, spot, move, part, type, foe, other, q):
+        """
+        MoveMessage - a move related message
+        move : uint16 - the move id
+        part : uint8 - the sub id of the message
+        type : int8 - the elemental type of the message
+        foe : int8 - foe spot
+        other : int16 - additional numeric information
+        q : string - additional string information
+        """
+
+    def on_Battle_ItemMessage(self, bid, spot, bytes):
+    def on_Battle_NoOpponent(self, bid, spot, bytes):
+    def on_Battle_Flinch (self, bid, spot, bytes):
+    def on_Battle_Recoil(self, bid, spot, bytes):
+    def on_Battle_WeatherMessage(self, bid, spot, bytes):
+    def on_Battle_StraightDamage(self, bid, spot, bytes):
+    def on_Battle_AbilityMessage(self, bid, spot, bytes):
+    def on_Battle_AbsStatusChange(self, bid, spot, bytes):
+    def on_Battle_Substitute(self, bid, spot, bytes):
+    def on_Battle_BattleEnd(self, bid, spot, bytes):
+    def on_Battle_BlankMessage(self, bid, spot, bytes):
+    def on_Battle_CancelMove(self, bid, spot, bytes):
+    def on_Battle_Clause (self, bid, spot, bytes):
+    def on_Battle_DynamicInfo (self, bid, spot, bytes):
+    def on_Battle_DynamicStats (self, bid, spot, bytes):
+    def on_Battle_Spectating(self, bid, spot, bytes):
+    def on_Battle_SpectatorChat(self, bid, spot, bytes):
+    def on_Battle_AlreadyStatusMessage(self, bid, spot, bytes):
+    def on_Battle_TempPokeChange(self, bid, spot, bytes):
+    def on_Battle_ClockStart (self, bid, spot, bytes):
+    def on_Battle_ClockStop (self, bid, spot, bytes):
+    def on_Battle_Rated(self, bid, spot, bytes):
+    def on_Battle_TierSection (self, bid, spot, bytes):
+    def on_Battle_EndMessage(self, bid, spot, bytes):
+    def on_Battle_PointEstimate(self, bid, spot, bytes):
+    def on_Battle_MakeYourChoice(self, bid, spot, bytes):
+    def on_Battle_Avoid(self, bid, spot, bytes):
+    def on_Battle_RearrangeTeam(self, bid, spot, bytes):
+    def on_Battle_SpotShifts(self, bid, spot, bytes):
+
 
     ### Events from connecting to server
 
