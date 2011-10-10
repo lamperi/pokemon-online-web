@@ -617,13 +617,85 @@ class POProtocol(Int16StringReceiver, PODecoder):
         """
 
     def on_Battle_ItemMessage(self, bid, spot, bytes):
+        item, i = self.decode_number(bytes, 0, "!H")
+        part, i = self.decode_number(bytes, i, "B")
+        foe, i = self.decode_number(bytes, i, "b")
+        berry, i = self.decode_number(bytes, i, "!H")
+        other, i = self.decode_number(bytes, i, "!H")
+        self.onBattleItemMessage(bid, spot, item, part, foe, berry, other)
+
+    def onBattleItemMessage(self, bid, spot, item, part, foe, berry, other):
+        """
+        ItemMessage - an item related message
+        """
+
     def on_Battle_NoOpponent(self, bid, spot, bytes):
-    def on_Battle_Flinch (self, bid, spot, bytes):
+        self.onBattleNoOpponent(bid, spot)
+
+    def onBattleNoOpponent(self, bid, spot):
+        """
+        NoOpponent - there's no opponent message
+        """
+
+    def on_Battle_Flinch(self, bid, spot, bytes):
+        self.onBattleFlinch(bid, spot)
+
+    def onBattleFlinch(self, bid, spot):
+        """
+        Flinch - flinch happened message
+        """
+
     def on_Battle_Recoil(self, bid, spot, bytes):
+        damage, i = self.decode_number(bytes, 0, "B")
+        self.onBattleRecoil(bid, spot, damage > 0)
+
+    def onBattleRecoil(self, bid, spot, damage):
+        """
+        Recoil - a recoil or draining happened
+        """
+
     def on_Battle_WeatherMessage(self, bid, spot, bytes):
+        wstatus, i = self.decode_number(bytes, 0, "B")
+        weather, i = self.decode_number(bytes, i, "B")
+        self.onBattleWeatherMessage(bid, spot, wstatus, weather)
+
+    def onBattleWeatherMessage(self, bid, spot, wstatus, weather):
+        """
+        WeatherMessage
+        """
+
     def on_Battle_StraightDamage(self, bid, spot, bytes):
+        damage, i = self.decode_number(bytes, 0, "!H")
+        self.onBattleStraightDamage(bid, spot, damage)
+
+    def onBattleStraightDamage(self, bid, spot, damage):
+        """
+        StraightDamage
+        """
+
     def on_Battle_AbilityMessage(self, bid, spot, bytes):
+        ab, i = self.decode_number(bytes, 0, "!H")
+        part, i = self.decode_number(bytes, i, "B")
+        type, i = self.decode_number(bytes, i, "b")
+        foe, i = self.decode_number(bytes, i, "b")
+        other, i = self.decode_number(bytes, i, "!h")
+        self.onBattleAbilityMessage(bid, spot, ab, part, type, foe, other)
+
+    def onBattleAbilityMessage(self, bid, spot, ab, part, type, foe, other):
+        """
+        AbilityMessage
+        """
+
     def on_Battle_AbsStatusChange(self, bid, spot, bytes):
+        poke, i = self.decode_number(bytes, 0, "b")
+        status, i = self.decode_number(bytes, 0, "b")
+        self.onBattleAbsStatusChange(bid, spot, poke, status)
+
+    def onBattleAbsStatusChange(self, bid, spot, poke, status):
+        """
+        AbsStatusChange
+        """
+
     def on_Battle_Substitute(self, bid, spot, bytes):
     def on_Battle_BattleEnd(self, bid, spot, bytes):
     def on_Battle_BlankMessage(self, bid, spot, bytes):
@@ -636,7 +708,7 @@ class POProtocol(Int16StringReceiver, PODecoder):
     def on_Battle_AlreadyStatusMessage(self, bid, spot, bytes):
     def on_Battle_TempPokeChange(self, bid, spot, bytes):
     def on_Battle_ClockStart (self, bid, spot, bytes):
-    def on_Battle_ClockStop (self, bid, spot, bytes):
+    def on_Battle_ClocakStop (self, bid, spot, bytes):
     def on_Battle_Rated(self, bid, spot, bytes):
     def on_Battle_TierSection (self, bid, spot, bytes):
     def on_Battle_EndMessage(self, bid, spot, bytes):
