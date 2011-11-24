@@ -1317,7 +1317,7 @@ class PokePersonal(object):
         self.dv = [0]*6
         self.ev = [0]*6
     def __repr__(self):
-        return "<POProtocol.PokePersonal (uniqueid=%r, nickname=%e)>" % (self.uniqueid, self.nickname)
+        return "<POProtocol.PokePersonal (uniqueid=%r, nickname=%s)>" % (self.uniqueid, self.nickname)
 
 class PokeUniqueId(object):
     def __init__(self, pokenum=0, subnum=0):
