@@ -12,13 +12,14 @@ from struct import pack, unpack
 from json import loads, dumps
 from hashlib import md5
 
-from poprotocol import POProtocol, RegistryProtocol, ChallengeInfo
+from poprotocol.interfaces import TwistedClientProtocol, TwistedRegistryProtocol
+from poprotocol import ChallengeInfo
 from teamloader import loadTeam
 
-class Registry(RegistryProtocol):
+class Registry(TwistedRegistryProtocol):
 
     def __init__(self):
-        RegistryProtocol.__init__(self)
+        TwistedRegistryProtocol.__init__(self)
         self.servers = []
         self.deferred = Deferred()
 
@@ -28,10 +29,10 @@ class Registry(RegistryProtocol):
     def onServerListEnd(self):
         self.deferred.callback(self.servers)
 
-class Receiver(POProtocol):
+class Receiver(TwistedClientProtocol):
 
     def __init__(self):
-        POProtocol.__init__(self)
+        TwistedClientProtocol.__init__(self)
         self.client = None
 
     # Helpers
