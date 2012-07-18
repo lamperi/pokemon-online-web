@@ -6,14 +6,21 @@ import os
 from twisted.application import service, internet
 from twisted.web import static, server
 
-from websocket import WebSocketSite
-from server import POhandler
+from txsockjs.factory import SockJSFactory
+from server import POFactory
 
 def getWebService():
+    web_service = service.MultiService()
+
     root = static.File('.')
-    site = WebSocketSite(root)
-    site.addHandler('/test', POhandler)
-    return internet.TCPServer(8080, site)
+    factory = server.Site(root)
+    internet.TCPServer(8080, factory).setServiceParent(web_service)
+
+    factory = POFactory()
+    factory = SockJSFactory(factory)
+    internet.TCPServer(8081, factory).setServiceParent(web_service)
+
+    return web_service
 
 application = service.Application("Pokemon Online Web Gateway")
 

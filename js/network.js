@@ -1,14 +1,15 @@
-Network = {
+/*global SockJS,location,console,alert,document,UI,$*/
+var Network = {
     init: function(handler) {
-        var ws;
 
         this.handler = handler;
-        var url = "ws://" + location.host + "/test";
-        ws = this.ws = new WebSocket(url);
-        ws.onmessage = function(evt) {
+        var sock = new SockJS('http://' + location.hostname + ':8081');
+        this.sock = sock;
+        sock.onmessage = function(evt) {
             try {
-                var data = JSON.parse(evt.data)
+                var data = JSON.parse(evt.data);
                 $('#output').text(data.type);
+                console.log('Got event of data type ' + data.type + ": " + evt.data);
                 if (!handler[data.type]) {
                     console.log('Unknown event: ' + data.type);
                     return;
@@ -21,29 +22,29 @@ Network = {
             } catch(e) {
                 alert("Couldn't parse '" + evt.data + "': "+e);
             }
-        }
+        };
     
-        ws.onopen = function(evt) {
+        sock.onopen = function(evt) {
             $('#conn_status').html('<b>Connected</b>');
-        }
-        ws.onerror = function(evt) {
+        };
+        sock.onerror = function(evt) {
             $('#conn_status').html('<b>Error</b>');
-        }
-        ws.onclose = function(evt) {
+        };
+        sock.onclose = function(evt) {
             $('#conn_status').html('<b>Closed</b>');
-        }
+        };
     },
 
     disconnect: function() {
-        this.ws.close();
+        this.sock.close();
     },
 
     sendJSON: function(o) {
-        this.ws.send(JSON.stringify(o));
+        this.sock.send(JSON.stringify(o));
     },
 
     sendConnect: function(ip, port) {
-        this.sendJSON({type: 'Connect', ip: ip, port: parseInt(port)});
+        this.sendJSON({type: 'Connect', ip: ip, port: parseInt(port,10)});
     },
 
     sendLogin: function(name) {
@@ -55,11 +56,11 @@ Network = {
     },
 
     sendJoinChannel: function(chanName) {
-        this.sendJSON({type: 'JoinChannel', chanName: chanName})
+        this.sendJSON({type: 'JoinChannel', chanName: chanName});
     },
 
     sendLeaveChannel: function(chanId) {
-        this.sendJSON({type: 'LeaveChannel', chanId: chanId})
+        this.sendJSON({type: 'LeaveChannel', chanId: chanId});
     },
     
     sendRegister: function() {
@@ -79,15 +80,15 @@ Network = {
     },
 
     sendBattleCommand: function(id, choice) {
-        this.sendJSON({type: 'BattleCommand', id: id, choice: choice})
+        this.sendJSON({type: 'BattleCommand', id: id, choice: choice});
     },
 
     sendBattleFinished: function(id, result) {
-        this.sendJSON({type: 'BattleFinished', battleid: id, result: result})  
-    },
-}
+        this.sendJSON({type: 'BattleFinished', battleid: id, result: result});
+    }
+};
 
 $(document).ready(function() {
     var handler = new UI.Handler();
-    Network.init(handler)
+    Network.init(handler);
 });

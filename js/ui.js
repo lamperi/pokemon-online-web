@@ -302,7 +302,7 @@ UI = function() {
             resizable: false, 
             slidable: false, 
             south__initClosed: true, 
-            north__initClosed: true,
+            north__initClosed: false,
         });
         centerLayout = $('#centerWrapper').layout({
             name: "centerLayout",
@@ -605,9 +605,6 @@ UI = function() {
 
     Handler.prototype.VersionControl = function(data) {
        $('#server_version').text(data.version);
-    }
-
-    Handler.prototype.ServerName = function(data) {
        $('#server_name').text(data.name);
     }
 
@@ -649,8 +646,10 @@ UI = function() {
     }
 
     Handler.prototype.PlayersList = function(data) {
-        var player = new Logic.Player(data.player);
-        Data.players[player.id] = player;
+        for (var i = 0; i < data.players.length; ++i) {
+            var player = new Logic.Player(data.players[i]);
+            Data.players[player.id] = player;
+        }
     }
 
     Handler.prototype.EngageBattle = function(data) {
@@ -717,20 +716,19 @@ UI = function() {
         delete Data.players[data.playerId];
     }
 
-    Handler.prototype.ChannelMessage = function(data) {
-        print(data.chanId, fancyLine(data.user, data.message));
-    }
-
-    Handler.prototype.HtmlMessage = function(data) {
-        printAll(data.message);
-    }
-
-    Handler.prototype.HtmlChannel = function(data) {
-        print(data.chanId, data.message);
-    }
-
     Handler.prototype.SendMessage = function(data) {
-        printAll(fancyLine(data.user, data.message));
+        var user = data.hasId ? Data.players[data.id].name : "???";
+        if (!data.hasChannel) {
+            if (data.isHtml)
+                printAll(data.message);
+            else
+                printAll(fancyLine(user, data.message));
+        } else {
+            if (data.isHtml)
+                print(data.channel, data.message);
+            else
+                print(data.channel, fancyLine(data.user, data.message));
+        }
     }
 
     Handler.prototype.Register = function(data) {
@@ -754,11 +752,17 @@ UI = function() {
         plainElement.scrollTop = plainElement.scrollHeight;
     }
 
+    Handler.prototype.RegistryAnnouncement = function(data) {
+        alert('Reg-announcement: ' + data.announcement);
+        $('#announcement').html("<center>" + data.announcement + "</center>");
+        mainLayout.resizeAll();
+    }
+
     Handler.prototype.ServerList = function(data) {
         var table = [];
         for (var i = 0; i < data.servers.length; ++i) {
             var maxPlayers = data.servers[i][4] == 0 ? '' : "/" + data.servers[i][4];
-            table.push("<tr><td>" + data.servers[i][0] + "</td><td>" + data.servers[i][2] + maxPlayers + "</td><td>" + data.servers[i][3] + ":" + data.servers[i][5] + "</td></tr>"); 
+            table.push("<tr><td>" + data.servers[i][0] + "</td><td>" + data.servers[i][2] + maxPlayers + "</td><td>" + data.servers[i][3] + ":" + data.servers[i][5] + "</td><td>" + (data.protected ? 'protected' : '') +"</td></tr>"); 
         }
         $("#server-listing tbody").append(table.join(""));
         $("#server-listing tr").click(function() {

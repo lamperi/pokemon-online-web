@@ -1,12 +1,12 @@
 from twisted.internet.protocol import Protocol, Factory
 from twisted.web import resource
+from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.internet.endpoints import TCP4ClientEndpoint
-from twisted.protocols.basic import Int16StringReceiver
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
-from websocket import WebSocketHandler, WebSocketSite
+from txsockjs.factory import SockJSFactory
 
 from struct import pack, unpack
 from json import loads, dumps
@@ -21,13 +21,17 @@ class Registry(TwistedRegistryProtocol):
     def __init__(self):
         TwistedRegistryProtocol.__init__(self)
         self.servers = []
-        self.deferred = Deferred()
+        self.announcement = Deferred()
+        self.serverlist = Deferred()
 
-    def onPlayersList(self, name, desc, numplayers, ip, maxplayers, port):
-        self.servers.append([name, desc, numplayers, ip, maxplayers, port])
+    def onAnnouncement(self, announcement):
+        self.announcement.callback(announcement)
+
+    def onPlayersList(self, name, desc, numplayers, ip, maxplayers, port, protected):
+        self.servers.append([name, desc, numplayers, ip, maxplayers, port, protected])
 
     def onServerListEnd(self):
-        self.deferred.callback(self.servers)
+        self.serverlist.callback(self.servers)
 
 class Receiver(TwistedClientProtocol):
 
@@ -39,10 +43,10 @@ class Receiver(TwistedClientProtocol):
 
     def serializePlayer(self, playerInfo):
         player = { 'id': playerInfo.id, 'name': playerInfo.name, 'info': playerInfo.info, 
-                   'auth': playerInfo.auth, 'flags': playerInfo.flags, 
-                   'rating': playerInfo.rating, 'avatar': playerInfo.avatar,
-                   'tier': playerInfo.tier, 'color': playerInfo.color.__dict__,
-                   'gen': playerInfo.gen, 'pokemon': [uid.__dict__ for uid in playerInfo.pokemon]}
+                   'auth': playerInfo.auth, 'away': playerInfo.away, 
+                   'hasLadder': playerInfo.hasLadder,
+                   'teams': playerInfo.teams, 'avatar': playerInfo.avatar,
+                   'color': playerInfo.color.__dict__ }
         return player
 
     def serializeTeamBattle(self, teamBattle):
@@ -58,11 +62,8 @@ class Receiver(TwistedClientProtocol):
 
     # PO Events
 
-    def onServerName(self, name):
-        self.client.sendObject({'type': 'ServerName', 'name': name})
-    
-    def onVersionControl(self, version):
-        self.client.sendObject({'type': 'VersionControl', 'version': version})
+    def onVersionControl(self, version, name):
+        self.client.sendObject({'type': 'VersionControl', 'version': version, 'name': name})
 
     def onRegister(self):
         self.client.sendObject({'type': 'Register'})
@@ -86,9 +87,11 @@ class Receiver(TwistedClientProtocol):
     def onChannelsList(self, channels):
         self.client.sendObject({'type': 'ChannelsList', 'channels': channels})
 
-    def onPlayersList(self, playerInfo):
-        player = self.serializePlayer(playerInfo)
-        self.client.sendObject({'type': 'PlayersList', 'player': player})
+    def onPlayersList(self, playerInfos):
+        players = []
+        for player in playerInfos:
+            players.append(self.serializePlayer(player))
+        self.client.sendObject({'type': 'PlayersList', 'players': (players)})
 
     def onPlayerBan(self, playerId, srcId):
         self.client.sendObject({'type': 'PlayerBan', 'playerId': playerId, 'srcId': srcId})
@@ -147,8 +150,8 @@ class Receiver(TwistedClientProtocol):
     def onAway(self, playerid, isAway):
         self.client.sendObject({'type': 'Away', 'playerId': playerid, 'isAway': isAway})
 
-    def onSendMessage(self, user, message):
-        self.client.sendObject({'type': 'SendMessage', 'user': user, 'message': message})
+    def onSendMessage(self, message, hasId=False, hasChannel=False, isHtml=False, id=0, channel=0, user=None):
+        self.client.sendObject({'type': 'SendMessage', 'id': id, 'message': message, 'channel': channel, 'hasChannel': hasChannel, 'hasId': hasId, 'isHtml': isHtml})
 
     def onHtmlMessage(self, message):
         self.client.sendObject({'type': 'HtmlMessage', 'message': message})
@@ -161,12 +164,15 @@ class Receiver(TwistedClientProtocol):
     def connectionLost(self, reason):
         if self.client:
             self.client.sendObject({'type': 'Disconnected', 'reason': str(reason)})
+            print "DISCONNECTED " + str(reason)
             self.client = None
 
-class POhandler(WebSocketHandler):
-    def __init__(self, transport):
-        print 'Creating handler'
-        WebSocketHandler.__init__(self, transport)
+class POFactory(Factory):
+    def buildProtocol(self, addr):
+        return POHandler()
+
+class POHandler(Protocol):
+    def __init__(self):
         self.proxy = None
         self.pending = []
 
@@ -177,22 +183,23 @@ class POhandler(WebSocketHandler):
         print 'Connected to client.'
         factory = Factory()
         factory.protocol = Registry
-        point = TCP4ClientEndpoint(reactor, "pokemon-online.dynalias.net", 5081)
+        point = TCP4ClientEndpoint(reactor, "pokemon-online.dynalias.net", 5090)
         d = point.connect(factory)
 
         def gotRegistry(registry):
+            def gotAnnouncement(announcement):
+                self.sendObject({'type': 'RegistryAnnouncement', 'announcement': announcement})
             def gotServerList(servers):
                 self.sendObject({'type': 'ServerList', 'servers': servers})
                 registry.transport.loseConnection()
-            registry.deferred.addCallback(gotServerList)
+            registry.announcement.addCallback(gotAnnouncement)
+            registry.serverlist.addCallback(gotServerList)
 
         d.addCallback(gotRegistry)
         d.addErrback(self.cantConnect)
 
-    def frameReceived(self, frame):
-        json = loads(frame)
-        if not json.has_key("type"):
-            return
+    def dataReceived(self, data):
+        json = loads(data)
 
         if json["type"] == "Connect":
             ip = json.get("ip", None)
@@ -202,22 +209,20 @@ class POhandler(WebSocketHandler):
                 return
 
         if not self.proxy:
-            self.pending.append(frame)
+            self.pending.append(data)
             return
 
-        try:
-            method = "on{0}".format(json["type"])
-            #print method
-            if hasattr(self, method):
-                getattr(self, method)(json)
-            else:
-                print "Unknown event:", method
-        except Exception as e:
-            print "Error handling in JSON event: {0}".format(json.get("type"), "UnknownEvent")
-            print "{0}: {1}".format(e.__class__.__name__, e) 
+        #try:
+        method = "on{0}".format(json["type"])
+        if hasattr(self, method):
+            getattr(self, method)(json)
+        else:
+            print "Unknown event:", method
+        #except Exception as e:
+        #    print "Error handling in JSON event: {0}".format(json.get("type"), "UnknownEvent")
+        #    print "{0}: {1}".format(e.__class__.__name__, e) 
             
     def sendObject(self, o):
-        #print dumps(o)
         self.transport.write(dumps(o))
 
     def createProxyConnection(self, ip, port):
@@ -240,16 +245,14 @@ class POhandler(WebSocketHandler):
         proxy.client = self
         self.proxy.setProxyIP(self.proxy.transport.getHost().host)
         for p in self.pending:
-            self.frameReceived(p)
+            self.dataReceived(p)
 
     def cantConnect(self, msg):
         print 'Can\'t connect: {0}'.format(msg)
 
     # Handing JSON Events from Websocket client
     def onLogin(self, json):
-        info = loadTeam()
-        info.team.nick = json['name']
-        self.proxy.login(info)
+        self.proxy.login(json['name'], clientType=u'webclient', defaultChannel=u'WebClient')
 
     def onChannelMessage(self, json):
         self.proxy.sendChannelMessage(json['chanId'], json['message'])
@@ -285,29 +288,16 @@ class POhandler(WebSocketHandler):
     def onBattleFinished(self, json):
         self.proxy.battleFinished(json['battleid'], json['result'])
 
-class FlashSocketPolicy(Protocol):
-    """ A simple Flash socket policy server.
-    See: http://www.adobe.com/devnet/flashplayer/articles/socket_policy_files.html
-    """
-    def connectionMade(self):
-        policy = '<?xml version="1.0"?><!DOCTYPE cross-domain-policy SYSTEM ' \
-                 '"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">' \
-                 '<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>'
-        self.transport.write(policy)
-        self.transport.loseConnection()
-
-
-
 if __name__ == "__main__":
     # run our websocket server
     # serve index.html from the local directory
     root = File('.')
-    site = WebSocketSite(root)
-    site.addHandler('/test', POhandler)
-    reactor.listenTCP(8080, site)
-    # run policy file server
-    #factory = Factory()
-    #factory.protocol = FlashSocketPolicy
-    #reactor.listenTCP(843, factory)
+    factory = Site(root)
+    reactor.listenTCP(8080, factory)
+
+    factory = POFactory()
+    factory = SockJSFactory(factory)
+    reactor.listenTCP(8081, factory)
+
     reactor.run()
 

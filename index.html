@@ -10,14 +10,7 @@
         -->
         <link rel="stylesheet" type="text/css" href="css/cupertino/jquery-ui-1.8.13.custom.css">
         <link rel="stylesheet" type="text/css" href="css/style.css">
-        <!--
-        <script type="text/javascript" src="js/websocket/swfobject.js"></script>
-        <script type="text/javascript" src="js/websocket/web_socket.js"></script>
-        <script type="text/javascript">
-WEB_SOCKET_SWF_LOCATION = "js/websocket/WebSocketMain.swf";
-WEB_SOCKET_DEBUG = true;
-	</script>
-        -->
+        <script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
         <script type="text/javascript" src="js/jquery-1.5.1.min.js"></script>
         <script type="text/javascript" src="js/jquery-ui-1.8.13.custom.min.js"></script>
         <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
@@ -88,7 +81,7 @@ WEB_SOCKET_DEBUG = true;
             <div id="dialog-connect-servers-container">
                 <table id="server-listing">
                     <thead>
-                        <tr><th>Server Name</th><th>Players</th><th>Connection</th></tr>
+                        <tr><th>Server Name</th><th>Players</th><th>Connection</th><th>Protected</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
