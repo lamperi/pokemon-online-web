@@ -12,7 +12,7 @@ from server import POFactory
 def getWebService():
     web_service = service.MultiService()
 
-    root = static.File('.')
+    root = static.File('static')
     factory = server.Site(root)
     internet.TCPServer(8080, factory).setServiceParent(web_service)
 

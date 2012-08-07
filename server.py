@@ -291,7 +291,7 @@ class POHandler(Protocol):
 if __name__ == "__main__":
     # run our websocket server
     # serve index.html from the local directory
-    root = File('.')
+    root = File('static')
     factory = Site(root)
     reactor.listenTCP(8080, factory)
 
