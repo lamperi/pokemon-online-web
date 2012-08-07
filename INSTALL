@@ -1,0 +1,13 @@
+You need Python 2.7 and twisted to run this.
+
+To get the PO protocol installed:
+git submodule init
+git submodule update
+
+To run the web server, you currently need to copy or link
+Themes and db from Pokemon Online installation to
+static/Themes and static/db
+Hopefully this will change at some point.
+
+To run the service:
+twistd -n -y powebservice.tac
