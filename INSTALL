@@ -1,8 +1,11 @@
-You need Python 2.7 and twisted to run this.
+You need Python 2.7 to run this.
+Install dependencies using:
+$ pip install twisted
+$ pip install txsockjs
 
 To get the PO protocol installed:
-git submodule init
-git submodule update
+$ git submodule init
+$ git submodule update
 
 To run the web server, you currently need to copy or link
 Themes and db from Pokemon Online installation to
